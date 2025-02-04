@@ -7,14 +7,14 @@
 
 enum types {
     TYPE_I=0,
-    TYPE_UI=1,
-    TYPE_LI=2,
-    TYPE_ULI=3,
-    TYPE_LLI=4,
-    TYPE_ULLI=5,
-    TYPE_FD=6,
-    TYPE_D=7,
-    TYPE_LD=8
+    TYPE_UI,
+    TYPE_LI,
+    TYPE_ULI,
+    TYPE_LLI,
+    TYPE_ULLI,
+    TYPE_FD,
+    TYPE_D,
+    TYPE_LD
 }
 
 typedef union {
