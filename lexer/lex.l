@@ -49,7 +49,35 @@ newline		\n
 ws			[ \t\r]+
 
 %%
-;				{/* INSERT SINGLE-CHARACTER TOKENS */}
+";"				{return(';');}
+
+"+"				{return('+');}
+"-"				{return('-');}
+"*"				{return('*');}
+"/"				{return('/');}
+"%"				{return('%');}
+">"				{return('>');}
+"<"				{return('<');}
+"="				{return('=');}
+
+","				{return(',');}
+
+":"				{return(':');}
+"?"				{return('?');}
+"&"				{return('&');}
+"|"				{return('|');}
+"!"				{return('!');}
+"^"				{return('^');}
+"~"				{return('~');}
+
+"("				{return('(');}
+")"				{return(')');}
+"["				{return('[');}
+"]"				{return(']');}
+"{"				{return('{');}
+"}"				{return('}');}
+
+
 "->"			{return(INDSEL);}
 "++"			{return(PLUSPLUS);}
 "--"			{return(MINUSMINUS);}
@@ -164,7 +192,7 @@ void num_val(char type) {
 			if not adequately specified with a suffix
 		
 			when a positive int's type needs to grow,
-			we make it longer before we make it unsigned
+			wINDSELe make it longer before we make it unsigned
 			e.g. int 3000000000 becomes long int rather than unsigned int
 			this was an arbitrary decision and theoretically more costly,
 			but avoids erroneous unsigning.  */
