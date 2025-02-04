@@ -34,11 +34,12 @@ typedef union {
 
 extern YYSTYPE yylval;
 extern int line;
+
 %}
 
 id			[A-Za-z_][A-Za-z0-9_]*
-charlit		\'.\'
-string		\".+\"
+charlit		\'[\S\s]\'
+string		\"[\S\s]*\"
 octint		[\+-]?0[0-7]*([Uu]?[L|LL|l|ll]?)|([L|LL|l|ll]?[Uu]?)
 decint		[\+-]?[1-9][0-9]*([Uu]?[L|LL|l|ll]?)|([L|LL|l|ll]?[Uu]?)
 hexint		[\+-]?0[Xx][0-9A-Fa-f]+([Uu]?[L|LL|l|ll]?)|([L|LL|l|ll]?[Uu]?)
