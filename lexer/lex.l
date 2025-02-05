@@ -1,3 +1,4 @@
+%option noyywrap
 %{
 #include "tokens-manual.h"
 #include <string.h>
@@ -15,17 +16,17 @@ enum types {
     TYPE_FD,
     TYPE_D,
     TYPE_LD
-}
+};
 
 typedef union {
 	long long int i;
 	long double f;
-} NumberValue
+} NumberValue;
 
 typedef struct {
 	NumberValue val;
 	char type;
-} TypedNumber
+} TypedNumber;
 
 typedef union {
 	char *s;
@@ -33,12 +34,17 @@ typedef union {
 	TypedNumber n;
 } YYSTYPE;
 
-extern YYSTYPE yylval;
-extern int line;
+YYSTYPE yylval;
+int line;
+
+char *char_parse();
+char charlit_val();
+char *string_val();
+TypedNumber number_val(char type);
 
 %}
 
-id			[A-Za-z_][A-Za-z0-9_]*
+id		[A-Za-z_][A-Za-z0-9_]*
 
 octint		[\+-]?0[0-7]*([Uu]?[L|LL|l|ll]?)|([L|LL|l|ll]?[Uu]?)
 decint		[\+-]?[1-9][0-9]*([Uu]?[L|LL|l|ll]?)|([L|LL|l|ll]?[Uu]?)
@@ -49,21 +55,21 @@ hexflt		[\+-]?0[Xx](([0-9A-Fa-f]+\.[0-9A-Fa-f]*)|([0-9A-Fa-f]*\.[0-9A-Fa-f]+))([
 /* from here until str_lit defines: */
 /*  char_const (ref C99 w.d. 6.4.4.4) */
 /*  str_lit (ref C99 w.d. 6.5) */
-simple_esc	"\"[\'\"\?\\abfnrtv]
-oct_esc		"\"[0-7]?[0-7]?[0-7]?
-hex_esc		"\x"[0-9A-Fa-f]+
+simple_esc	"\\"[\'\"\?\\abfnrtv]
+oct_esc		"\\"[0-7]?[0-7]?[0-7]?
+hex_esc		"\\x"[0-9A-Fa-f]+
 hex_quad	[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]
-uni_char	"\"(u|U{hex_quad}){hex_quad}
-esc_seq		{simple_esc}|{octal_esc}|{hex-esc}|{uni_char}
+uni_char	"\\"(u|(U{hex_quad})){hex_quad}
+esc_seq		{simple_esc}|{oct_esc}|{hex_esc}|{uni_char}
 
 c_char		.&[^\'\\\n]|{esc_seq}
 char_const	L?\'{c_char}+\'
 
-s_char		.&[^\"\\\n]|{esc_seq}
+s_char		(.&[^\"\\\n])|{esc_seq}
 str_lit		L?\"{s_char}*\"
 
 newline		\n
-ws			[ \t\r]+
+ws		[ \t\r]+
 
 %%
 ";"				{return(';');}
@@ -99,7 +105,7 @@ ws			[ \t\r]+
 "<%"			{return('{');}
 "%>"			{return('}');}
 "%:"			{return('#');}
-"%:%:"			{return(POUNDPOUND;)}
+"%:%:"			{return(POUNDPOUND);}
 
 "->"			{return(INDSEL);}
 "++"			{return(PLUSPLUS);}
@@ -161,10 +167,10 @@ ws			[ \t\r]+
 "while"			{return(WHILE);}
 "_Bool"			{return(_BOOL);}
 "_Complex"		{return(_COMPLEX);}
-"_Imaginary"	{return(_IMAGINARY);}
+"_Imaginary"		{return(_IMAGINARY);}
 
 {id}			{yylval.s=strdup(yytext);	return(IDENT);}
-{char_const}	{yylval.c=charlit_val();	return(CHARLIT);}
+{char_const}		{yylval.c=charlit_val();	return(CHARLIT);}
 {str_lit}		{yylval.s=string_val();		return(STRING);}
 {octint}		{yylval.n=number_val('o');	return(NUMBER);}
 {decint}		{yylval.n=number_val('i');	return(NUMBER);}
@@ -183,7 +189,7 @@ char *char_parse() {
 	buf_idx = 0;
 
 	/* not implementing wide chars */
-	buf = calloc(yyleng-2, sizeof char);
+	buf = (char *) calloc(yyleng-2, sizeof(char));
 
 	/* exclude '' and "" */
 	for (i = 1; i < yyleng-1; i++) {
@@ -193,17 +199,17 @@ char *char_parse() {
 				case '0': case 'a': case 'b':
 				case 'f': case 'n': case 'r':
 				case 't': case 'v':
-					buf[idx++] = '\\';
-					buf[idx++] = yytext[i];
+					buf[buf_idx++] = '\\';
+					buf[buf_idx++] = yytext[i];
 					break;
 				case '\'': case '\"':
 				case '\?': case '\\':
-					buf[idx++] = yytext[i];
+					buf[buf_idx++] = yytext[i];
 					break;
 				case 'x':
 					/* INCOMPLETE: handle hex esc seq */
 					break;
-				case 'u': case 'U'
+				case 'u': case 'U':
 					/* optional, unimplemented */
 					break;
 				default:
@@ -211,7 +217,7 @@ char *char_parse() {
 					break;
 			}
 		} else { /* not in esc seq */
-			buf[idx++] = yytext[i];
+			buf[buf_idx++] = yytext[i];
 		}
 	}
 
@@ -230,15 +236,15 @@ char *string_val() {
 
 /* determine the type of number,
    store in TypedNumber number */
-void num_val(char type) {
+TypedNumber number_val(char type) {
 	TypedNumber tn;
 
 	if (type == 'o' || type == 'i' || type == 'h') { /* integer */
 		tn.type = TYPE_I;
 		for (int idx = yyleng-1; idx >= yyleng-4 && idx >= 0; idx--) {
-			if (yyltext[idx] == 'U' || yyltext[idx] == 'u') {
+			if (yytext[idx] == 'U' || yytext[idx] == 'u') {
 				tn.type++;
-			} else if (yyltext[idx] == 'L' || yyltext[idx] == 'l') {
+			} else if (yytext[idx] == 'L' || yytext[idx] == 'l') {
 				tn.type += 2;
 			} else {
 				break;
@@ -246,11 +252,11 @@ void num_val(char type) {
 		}
 
 		errno = 0;
-		tn.val.i = (yyltext[0] == '-')? strtoll(yyltext, NULL, 0) : strtoull(yyltext, NULL, 0);
+		tn.val.i = (yytext[0] == '-')? strtoll(yytext, NULL, 0) : strtoull(yytext, NULL, 0);
 		unsigned long long int uval = (unsigned long long int) tn.val.i;
 		
 		if (errno == ERANGE) {/* ERROR */}
-		if (tn.type % 2 == 1 && yyltext[0] == '-') {/* ERROR */}
+		if (tn.type % 2 == 1 && yytext[0] == '-') {/* ERROR */}
 
 		/*	below we try to determine the correct type
 			if not adequately specified with a suffix
@@ -262,19 +268,19 @@ void num_val(char type) {
 			but avoids erroneous unsigning.  */
 		
 		if (tn.type == TYPE_I && (
-			(yyltext[0] == '+' && uval > INT_MAX) ||
-			(yyltext[0] == '-' && tn.val.i < INT_MIN) )) {
+			(yytext[0] == '+' && uval > INT_MAX) ||
+			(yytext[0] == '-' && tn.val.i < INT_MIN) )) {
 			tn.type = TYPE_LI;
 		}
 
 		if (tn.type == TYPE_LI && (
-			(yyltext[0] == '+' && uval > LONG_MAX) ||
-			(yyltext[0] == '-' && tn.val.i < LONG_MIN) )) {
+			(yytext[0] == '+' && uval > LONG_MAX) ||
+			(yytext[0] == '-' && tn.val.i < LONG_MIN) )) {
 			tn.type = TYPE_LLI;
 		}
 
 		if (tn.type == TYPE_LLI &&
-			(yyltext[0] == '+' && uval > LLONG_MAX)) {
+			(yytext[0] == '+' && uval > LLONG_MAX)) {
 			tn.type = TYPE_ULLI;
 		}
 	}	
@@ -285,7 +291,7 @@ void num_val(char type) {
 		tn.type -= (yytext[yyleng-1] == 'F' || yytext[yyleng-1] == 'f');
 
 		errno = 0;
-		tn.val.f = strtold(yyltext, NULL, 0);
+		tn.val.f = strtold(yytext, NULL);
 
 		if (errno == ERANGE) {/* ERROR */}
 
