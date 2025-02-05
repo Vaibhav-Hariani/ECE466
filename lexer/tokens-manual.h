@@ -26,6 +26,7 @@ enum tokens {
 	ANDEQ,
 	OREQ,
 	XOREQ,
+	POUNDPOUND,
 	AUTO,
 	BREAK,
 	CASE,

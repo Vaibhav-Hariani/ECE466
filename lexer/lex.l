@@ -29,6 +29,7 @@ typedef struct {
 
 typedef union {
 	char *s;
+	char c;
 	TypedNumber n;
 } YYSTYPE;
 
@@ -77,6 +78,12 @@ ws			[ \t\r]+
 "{"				{return('{');}
 "}"				{return('}');}
 
+"<:"			{return('[');}
+":>"			{return(']');}
+"<%"			{return('{');}
+"%>"			{return('}');}
+"%:"			{return('#');}
+"%:%:"			{return(POUNDPOUND;)}
 
 "->"			{return(INDSEL);}
 "++"			{return(PLUSPLUS);}
@@ -100,6 +107,8 @@ ws			[ \t\r]+
 "&="			{return(ANDEQ);}
 "|="			{return(OREQ);}
 "^="			{return(XOREQ);}
+"##"			{return(POUNDPOUND);}
+
 "auto"			{return(AUTO);}
 "break"			{return(BREAK);}
 "case"			{return(CASE);}
@@ -137,8 +146,9 @@ ws			[ \t\r]+
 "_Bool"			{return(_BOOL);}
 "_Complex"		{return(_COMPLEX);}
 "_Imaginary"	{return(_IMAGINARY);}
+
 {id}			{yylval.s=strdup(yytext);	return(IDENT);}
-{charlit}		{yylval.s=charlit_val();	return(CHARLIT);}
+{charlit}		{yylval.c=charlit_val();	return(CHARLIT);}
 {string}		{yylval.s=string_val();		return(STRING);}
 {octint}		{yylval.n=number_val('o');	return(NUMBER);}
 {decint}		{yylval.n=number_val('i');	return(NUMBER);}
@@ -154,7 +164,7 @@ ws			[ \t\r]+
 	to flex start conditions  */
 char *charlit_val() {
 	/* process here */
-	return strdup(yytext);
+	return yytext[1];
 }
 
 /*	handle string literals similarly
