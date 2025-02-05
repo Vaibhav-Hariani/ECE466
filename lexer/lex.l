@@ -301,3 +301,25 @@ TypedNumber number_val(char type) {
 
 	return tn;
 }
+
+int main(int argc, char const *argv[])
+{
+	int fileno, t;
+
+	for (fileno = 1; fileno < argc; fileno++) {
+		yyin = fopen(argv[fileno], "r");
+
+		while (t = yylex()) {
+			switch (t) {
+				case IDENT:
+					// printf("%s\t%d\t%s\t%s\n", argv[fileno], line, "STRING", (char *) yylval);
+					break;
+				/* etc etc */
+				default:
+					break;
+			}
+		}
+	}
+	
+    return 0;
+}
