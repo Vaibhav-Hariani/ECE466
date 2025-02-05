@@ -39,13 +39,29 @@ extern int line;
 %}
 
 id			[A-Za-z_][A-Za-z0-9_]*
-charlit		\'[\S\s]\'
-string		\"[\S\s]*\"
+
 octint		[\+-]?0[0-7]*([Uu]?[L|LL|l|ll]?)|([L|LL|l|ll]?[Uu]?)
 decint		[\+-]?[1-9][0-9]*([Uu]?[L|LL|l|ll]?)|([L|LL|l|ll]?[Uu]?)
 hexint		[\+-]?0[Xx][0-9A-Fa-f]+([Uu]?[L|LL|l|ll]?)|([L|LL|l|ll]?[Uu]?)
 decflt		[\+-]?(([0-9]+\.[0-9]*)|([0-9]*\.[0-9]+))([Ee][\+-]?[0-9]+)?[FLfl]?
 hexflt		[\+-]?0[Xx](([0-9A-Fa-f]+\.[0-9A-Fa-f]*)|([0-9A-Fa-f]*\.[0-9A-Fa-f]+))([Pp][\+-]?[0-9]+)?[FLfl]?
+
+/* from here until str_lit defines: */
+/*  char_const (ref C99 w.d. 6.4.4.4) */
+/*  str_lit (ref C99 w.d. 6.5) */
+simple_esc	"\"[\'\"\?\\abfnrtv]
+oct_esc		"\"[0-7]?[0-7]?[0-7]?
+hex_esc		"\x"[0-9A-Fa-f]+
+hex_quad	[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]
+uni_char	"\"(u|U{hex_quad}){hex_quad}
+esc_seq		{simple_esc}|{octal_esc}|{hex-esc}|{uni_char}
+
+c_char		.&[^\'\\\n]|{esc_seq}
+char_const	L?\'{c_char}+\'
+
+s_char		.&[^\"\\\n]|{esc_seq}
+str_lit		L?\"{s_char}*\"
+
 newline		\n
 ws			[ \t\r]+
 
@@ -148,8 +164,8 @@ ws			[ \t\r]+
 "_Imaginary"	{return(_IMAGINARY);}
 
 {id}			{yylval.s=strdup(yytext);	return(IDENT);}
-{charlit}		{yylval.c=charlit_val();	return(CHARLIT);}
-{string}		{yylval.s=string_val();		return(STRING);}
+{char_const}	{yylval.c=charlit_val();	return(CHARLIT);}
+{str_lit}		{yylval.s=string_val();		return(STRING);}
 {octint}		{yylval.n=number_val('o');	return(NUMBER);}
 {decint}		{yylval.n=number_val('i');	return(NUMBER);}
 {hexint}		{yylval.n=number_val('h');	return(NUMBER);}
@@ -160,17 +176,55 @@ ws			[ \t\r]+
 
 %%
 
-/*	handle char literals similarly
-	to flex start conditions  */
-char *charlit_val() {
-	/* process here */
+char *char_parse() {
+	int i, buf_idx;
+	char *buf;
+
+	buf_idx = 0;
+
+	/* not implementing wide chars */
+	buf = calloc(yyleng-2, sizeof char);
+
+	/* exclude '' and "" */
+	for (i = 1; i < yyleng-1; i++) {
+		if (yytext[i] == '\\') {
+			/* esc seq start*/
+			switch (yytext[++i]) { /* first char of esc seq */
+				case '0': case 'a': case 'b':
+				case 'f': case 'n': case 'r':
+				case 't': case 'v':
+					buf[idx++] = '\\';
+					buf[idx++] = yytext[i];
+					break;
+				case '\'': case '\"':
+				case '\?': case '\\':
+					buf[idx++] = yytext[i];
+					break;
+				case 'x':
+					/* INCOMPLETE: handle hex esc seq */
+					break;
+				case 'u': case 'U'
+					/* optional, unimplemented */
+					break;
+				default:
+					/* INCOMPLETE: handle non-zero octal esc seq */
+					break;
+			}
+		} else { /* not in esc seq */
+			buf[idx++] = yytext[i];
+		}
+	}
+
+	return buf;
+}
+
+char charlit_val() {
+	/* process here using char_parse */
 	return yytext[1];
 }
 
-/*	handle string literals similarly
-	to flex start conditions  */
 char *string_val() {
-	/* process here */
+	/* process here using char_parse*/
 	return strdup(yytext);
 }
 
