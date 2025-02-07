@@ -1,41 +1,11 @@
 %option noyywrap
 %{
 #include "tokens-manual.h"
+#include "yylval.h"
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <errno.h>
-
-enum types {
-    TYPE_I=0,
-    TYPE_UI,
-    TYPE_LI,
-    TYPE_ULI,
-    TYPE_LLI,
-    TYPE_ULLI,
-    TYPE_FD,
-    TYPE_D,
-    TYPE_LD
-};
-
-typedef union {
-	long long int i;
-	long double f;
-} NumberValue;
-
-typedef struct {
-	NumberValue val;
-	char type;
-} TypedNumber;
-
-typedef union {
-	char *s;
-	char c;
-	TypedNumber n;
-} YYSTYPE;
-
-YYSTYPE yylval;
-int line;
 
 char *char_parse();
 char charlit_val();
@@ -300,26 +270,4 @@ TypedNumber number_val(char type) {
 	}
 
 	return tn;
-}
-
-int main(int argc, char const *argv[])
-{
-	int fileno, t;
-
-	for (fileno = 1; fileno < argc; fileno++) {
-		yyin = fopen(argv[fileno], "r");
-
-		while (t = yylex()) {
-			switch (t) {
-				case IDENT:
-					// printf("%s\t%d\t%s\t%s\n", argv[fileno], line, "STRING", (char *) yylval);
-					break;
-				/* etc etc */
-				default:
-					break;
-			}
-		}
-	}
-	
-    return 0;
 }
