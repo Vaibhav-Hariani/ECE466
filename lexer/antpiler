@@ -1,0 +1,4 @@
+#!/bin/bash
+
+gcc $@ |& sed 's/gcc/antpiler/g'
+
