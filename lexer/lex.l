@@ -12,8 +12,7 @@ char *filename;
 int line;
 
 char *new_filename();
-char *string_val();
-char *charlit_val();
+char *literal_val();
 TypedNumber number_val(char type);
 
 %}
@@ -149,8 +148,8 @@ ws		[ \t\r]+
 "_Imaginary"		{return(_IMAGINARY);}
 
 {id}			{yylval.s=strdup(yytext);	return(IDENT);}
-{char_const}		{yylval.s=charlit_val();	return(CHARLIT);}
-{str_lit}		{yylval.s=string_val();		return(STRING);}
+{char_const}	{yylval.s=literal_val(0);	return(CHARLIT);}
+{str_lit}		{yylval.s=literal_val(1);	return(STRING);}
 {octint}		{yylval.n=number_val('o');	return(NUMBER);}
 {decint}		{yylval.n=number_val('i');	return(NUMBER);}
 {hexint}		{yylval.n=number_val('h');	return(NUMBER);}
@@ -169,17 +168,17 @@ char *new_filename() {
 	return strndup(yytext+5, strlen(yytext)-7);
 }
 
-char *string_val() {
-	int i, buf_idx;
+char *literal_val(int is_str) {
+	int i, char_done, buf_idx;
 	char *buf;
 
-	buf_idx = 0;
+	char_done = buf_idx = 0;
 
 	/* not implementing wide chars */
-	buf = (char *) calloc(yyleng-2, sizeof(char));
+	buf = (char *) calloc((is_str)? yyleng-2 : 1, sizeof(char));
 
 	/* exclude '' and "" */
-	for (i = 1 + (yytext[0] == 'L'); i < yyleng-1; i++) {
+	for (i = 1 + (yytext[0] == 'L'); i < yyleng-1 && !char_done; i++) {
 		if (yytext[i] == '\\') {
 			/* esc seq start*/
 			switch (yytext[++i]) { /* first char of esc seq */
@@ -206,16 +205,10 @@ char *string_val() {
 		} else { /* not in esc seq */
 			buf[buf_idx++] = yytext[i];
 		}
+		char_done = !is_str;
 	}
 
 	return buf;
-}
-
-/*  current system cannot handle
-	final character being an esc seq,
-	different methodoloy may be needed  */
-char *charlit_val() {
-	return string_val();
 }
 
 /* determine the type of number,

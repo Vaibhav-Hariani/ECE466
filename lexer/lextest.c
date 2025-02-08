@@ -204,7 +204,7 @@ int main(int argc, char const *argv[]) {
 				break;
 			default:
                 tok_name = token_name(t);
-                printf("%s\t%d\t%s\n", filename, line, tok_name);
+                printf("%s\t%d\t%s\t\n", filename, line, tok_name);
                 free(tok_name);
                 break;
 		}
