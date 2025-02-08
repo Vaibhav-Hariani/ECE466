@@ -290,15 +290,15 @@ TypedNumber number_val(char type) {
 			this was an arbitrary decision and theoretically more costly,
 			but avoids erroneous unsigning.  */
 		
-		if (tn.type == TYPE_I && uval > INT_MAX) {
+		if (tn.type == TYPE_I && tn.val.i > INT_MAX) {
 			tn.type = TYPE_LI;
 		}
 
-		if (tn.type == TYPE_LI && uval > LONG_MAX) {
+		if (tn.type == TYPE_LI && tn.val.i > LONG_MAX) {
 			tn.type = TYPE_LLI;
 		}
 
-		if (tn.type == TYPE_LLI && uval > LLONG_MAX) {
+		if (tn.type == TYPE_LLI && tn.val.i > LLONG_MAX) {
 			tn.type = TYPE_ULLI;
 		}
 	}	
