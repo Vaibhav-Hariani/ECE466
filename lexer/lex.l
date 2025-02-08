@@ -44,7 +44,7 @@ char_const	L?\'{c_char}+\'
 s_char		[^\"\\\n]|{esc_seq}
 str_lit		L?\"{s_char}*\"
 
-preproc		"# "[01]" \""(.+)\".*\n
+preproc		"# "[0-9]+" \""(.+)\".*\n
 newline		\n
 ws			[ \t\r]+
 
