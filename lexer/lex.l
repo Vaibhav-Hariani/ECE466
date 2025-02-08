@@ -169,8 +169,8 @@ char *new_filename() {
 }
 
 char *literal_val(int is_str) {
-	int i, char_done, buf_idx, oct_char;
-	char *buf, *oct_esc, *oct_end;
+	int i, char_done, buf_idx, num_char;
+	char *buf, *num_esc, *num_end;
 
 	char_done = buf_idx = 0;
 
@@ -193,29 +193,48 @@ char *literal_val(int is_str) {
 					buf[buf_idx++] = yytext[i];
 					break;
 				case 'x':
-					/* INCOMPLETE: handle hex esc seq */
+					num_esc = yytext + i + 1;
+					num_char = strtol(num_esc, &num_end, 16);
+					i += (num_end - num_esc) / sizeof(char);
+					if (num_char > 255) { // restrict overflow
+						fprintf(stderr, "%s:%d:Warning:Hex escape sequence \\x%x out of range\n",
+							filename, line, num_char);
+						fflush(stderr);
+						num_char = 255;
+					}
+
+					if (num_char == 0) {
+						// "\x0" -> "\0"
+						buf[buf_idx++] = '\\';
+						buf[buf_idx++] = yytext[i];
+					} else if (num_char < 32 || num_char >= 127) {
+						// non-printable or beyond ASCII -> "\\%03o"
+						sprintf(buf + buf_idx, "\\%03o", num_char);
+						buf_idx += 4;
+					} else {
+						buf[buf_idx++] = (char) num_char;
+					}
 					break;
 				case 'u': case 'U':
 					/* optional, unimplemented */
 					break;
 				default:
-					oct_esc = (char *) calloc(3, sizeof(char));
-					strncpy(oct_esc, yytext + i, 3);
-					oct_char = strtol(oct_esc, &oct_end, 8);
-					i += (oct_end == 0)? 2 : (oct_end - oct_esc) / sizeof(char) - 1;
-					free(oct_esc);
+					num_esc = (char *) calloc(3, sizeof(char));
+					strncpy(num_esc, yytext + i, 3);
+					num_char = strtol(num_esc, &num_end, 8);
+					i += (num_end == 0)? 2 : (num_end - num_esc) / sizeof(char) - 1;
+					free(num_esc);
 
-					if (oct_char == 0) {
+					if (num_char == 0) {
 						// "\0" -> "\0"
 						buf[buf_idx++] = '\\';
 						buf[buf_idx++] = yytext[i];
-					} else if (oct_char < 32 || oct_char >= 127) {
+					} else if (num_char < 32 || num_char >= 127) {
 						// non-printable or beyond ASCII -> "\\%03o"
-						sprintf(buf + buf_idx, "\\%03o", oct_char);
+						sprintf(buf + buf_idx, "\\%03o", num_char);
 						buf_idx += 4;
 					} else {
-						buf[buf_idx++] = '\\';
-						buf[buf_idx++] = (char) oct_char;
+						buf[buf_idx++] = (char) num_char;
 					}
 					break;
 			}
@@ -223,6 +242,13 @@ char *literal_val(int is_str) {
 			buf[buf_idx++] = yytext[i];
 		}
 		char_done = !is_str;
+	}
+
+	if (char_done && yytext[i] != '\'') {
+		fprintf(stderr,
+			"%s:%d:Warning:Unsupported multibyte character literal truncated to first byte\n",
+			filename, line);
+		fflush(stderr);
 	}
 
 	return buf;
