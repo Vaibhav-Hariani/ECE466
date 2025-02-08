@@ -17,7 +17,7 @@ TypedNumber number_val(char type);
 
 %}
 
-id		[A-Za-z_][A-Za-z0-9_]*
+id			[A-Za-z_][A-Za-z0-9_]*
 
 intsuf		(([Uu]?((L?L?)|(l?l?)))|(((L?L?)|(l?l?))[Uu]?))
 octint		0[0-7]*{intsuf}
@@ -46,7 +46,7 @@ str_lit		L?\"{s_char}*\"
 
 preproc		"# "[01]" \""(.+)\".*\n
 newline		\n
-ws		[ \t\r]+
+ws			[ \t\r]+
 
 %%
 ";"				{return(';');}
@@ -145,7 +145,7 @@ ws		[ \t\r]+
 "while"			{return(WHILE);}
 "_Bool"			{return(_BOOL);}
 "_Complex"		{return(_COMPLEX);}
-"_Imaginary"		{return(_IMAGINARY);}
+"_Imaginary"	{return(_IMAGINARY);}
 
 {id}			{yylval.s=strdup(yytext);	return(IDENT);}
 {char_const}	{yylval.s=literal_val(0);	return(CHARLIT);}
