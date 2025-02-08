@@ -161,6 +161,7 @@ ws			[ \t\r]+
 {preproc}		{filename=new_filename(); line=1;}
 {newline}		{line++;}
 {ws}			{/*empty*/}
+.				{fprintf(stderr, "%s:%d:Error:Unrecognised token %s\n", filename, line, yytext);}
 
 %%
 
