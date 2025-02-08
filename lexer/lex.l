@@ -192,7 +192,10 @@ char *literal_val(int is_str) {
 				case '\?':
 					buf[buf_idx++] = yytext[i];
 					break;
-				case 'x':
+				case 'u': case 'U':
+					/* optional, unimplemented */
+					break;
+				case 'x': /* hex esc sequence */
 					num_esc = yytext + i + 1;
 					num_char = strtol(num_esc, &num_end, 16);
 					i += (num_end - num_esc) / sizeof(char);
@@ -215,10 +218,7 @@ char *literal_val(int is_str) {
 						buf[buf_idx++] = (char) num_char;
 					}
 					break;
-				case 'u': case 'U':
-					/* optional, unimplemented */
-					break;
-				default:
+				default: /* octal esc sequence */
 					num_esc = (char *) calloc(3, sizeof(char));
 					strncpy(num_esc, yytext + i, 3);
 					num_char = strtol(num_esc, &num_end, 8);
@@ -272,35 +272,33 @@ TypedNumber number_val(char type) {
 		}
 
 		errno = 0;
-		tn.val.i = (yytext[0] == '-')? strtoll(yytext, NULL, 0) : strtoull(yytext, NULL, 0);
-		unsigned long long int uval = (unsigned long long int) tn.val.i;
+		tn.val.i = strtoull(yytext, NULL, 0);
 		
-		if (errno == ERANGE) {/* ERROR */}
-		if (tn.type % 2 == 1 && yytext[0] == '-') {/* ERROR */}
+		if (errno == ERANGE) {/* ERROR */
+			fprintf(stderr,
+				"%s:%d:Warning:Integer constant exceeds valid range\n",
+				filename, line);
+			fflush(stderr);
+		}
 
 		/*	below we try to determine the correct type
 			if not adequately specified with a suffix
 		
-			when a positive int's type needs to grow,
-			wINDSELe make it longer before we make it unsigned
+			when an int's type needs to grow,
+			we make it longer before we make it unsigned
 			e.g. int 3000000000 becomes long int rather than unsigned int
 			this was an arbitrary decision and theoretically more costly,
 			but avoids erroneous unsigning.  */
 		
-		if (tn.type == TYPE_I && (
-			(yytext[0] == '+' && uval > INT_MAX) ||
-			(yytext[0] == '-' && tn.val.i < INT_MIN) )) {
+		if (tn.type == TYPE_I && uval > INT_MAX) {
 			tn.type = TYPE_LI;
 		}
 
-		if (tn.type == TYPE_LI && (
-			(yytext[0] == '+' && uval > LONG_MAX) ||
-			(yytext[0] == '-' && tn.val.i < LONG_MIN) )) {
+		if (tn.type == TYPE_LI && uval > LONG_MAX) {
 			tn.type = TYPE_LLI;
 		}
 
-		if (tn.type == TYPE_LLI &&
-			(yytext[0] == '+' && uval > LLONG_MAX)) {
+		if (tn.type == TYPE_LLI && uval > LLONG_MAX) {
 			tn.type = TYPE_ULLI;
 		}
 	}	
@@ -313,10 +311,12 @@ TypedNumber number_val(char type) {
 		errno = 0;
 		tn.val.f = strtold(yytext, NULL);
 
-		if (errno == ERANGE) {/* ERROR */}
-
-		/*	the above method of inferring necessary type adjustments
-			does not apply here.  */
+		if (errno == ERANGE) {/* ERROR */
+			fprintf(stderr,
+				"%s:%d:Warning:Floating constant exceeds valid range\n",
+				filename, line);
+			fflush(stderr);
+		}
 	}
 
 	return tn;
