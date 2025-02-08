@@ -61,6 +61,8 @@ char *token_name(int t) {
         case TOKEOF:
             return strdup("TOKEOF");
 	    case INDSEL:
+            return strdup("INDSEL");
+        case PLUSPLUS:
             return strdup("PLUSPLUS");
 	    case MINUSMINUS:
             return strdup("MINUSMINUS");
