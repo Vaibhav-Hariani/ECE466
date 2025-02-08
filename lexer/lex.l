@@ -7,37 +7,45 @@
 #include <limits.h>
 #include <errno.h>
 
-char *char_parse();
-char charlit_val();
+YYSTYPE yylval;
+char *filename;
+int line;
+
+char *new_filename();
 char *string_val();
+char *charlit_val();
 TypedNumber number_val(char type);
 
 %}
 
 id		[A-Za-z_][A-Za-z0-9_]*
 
-octint		[\+-]?0[0-7]*([Uu]?[L|LL|l|ll]?)|([L|LL|l|ll]?[Uu]?)
-decint		[\+-]?[1-9][0-9]*([Uu]?[L|LL|l|ll]?)|([L|LL|l|ll]?[Uu]?)
-hexint		[\+-]?0[Xx][0-9A-Fa-f]+([Uu]?[L|LL|l|ll]?)|([L|LL|l|ll]?[Uu]?)
-decflt		[\+-]?(([0-9]+\.[0-9]*)|([0-9]*\.[0-9]+))([Ee][\+-]?[0-9]+)?[FLfl]?
-hexflt		[\+-]?0[Xx](([0-9A-Fa-f]+\.[0-9A-Fa-f]*)|([0-9A-Fa-f]*\.[0-9A-Fa-f]+))([Pp][\+-]?[0-9]+)?[FLfl]?
+intsuf		(([Uu]?((L?L?)|(l?l?)))|(((L?L?)|(l?l?))[Uu]?))
+octint		0[0-7]*{intsuf}
+decint		[1-9][0-9]*{intsuf}
+hexint		0[Xx][0-9A-Fa-f]+{intsuf}
+deci2f		[0-9]+([Ee][\+-]?[0-9]+)[FLfl]?
+hexi2f		0[Xx][0-9A-Fa-f]+([Pp][\+-]?[0-9]+)[FLfl]?
+decflt		(([0-9]+\.[0-9]*)|([0-9]*\.[0-9]+))([Ee][\+-]?[0-9]+)?[FLfl]?
+hexflt		0[Xx](([0-9A-Fa-f]+\.[0-9A-Fa-f]*)|([0-9A-Fa-f]*\.[0-9A-Fa-f]+))([Pp][\+-]?[0-9]+)?[FLfl]?
 
 /* from here until str_lit defines: */
 /*  char_const (ref C99 w.d. 6.4.4.4) */
 /*  str_lit (ref C99 w.d. 6.5) */
-simple_esc	"\\"[\'\"\?\\abfnrtv]
-oct_esc		"\\"[0-7]?[0-7]?[0-7]?
-hex_esc		"\\x"[0-9A-Fa-f]+
+simple_esc	\\[\'\"\?\\abfnrtv]
+oct_esc		\\[0-7]?[0-7]?[0-7]?
+hex_esc		\\x[0-9A-Fa-f]+
 hex_quad	[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]
-uni_char	"\\"(u|(U{hex_quad})){hex_quad}
+uni_char	\\(u|(U{hex_quad})){hex_quad}
 esc_seq		{simple_esc}|{oct_esc}|{hex_esc}|{uni_char}
 
-c_char		.&[^\'\\\n]|{esc_seq}
+c_char		[^\'\\\n]|{esc_seq}
 char_const	L?\'{c_char}+\'
 
-s_char		(.&[^\"\\\n])|{esc_seq}
+s_char		[^\"\\\n]|{esc_seq}
 str_lit		L?\"{s_char}*\"
 
+preproc		"# "[01]" \""(.+)\".*\n
 newline		\n
 ws		[ \t\r]+
 
@@ -140,19 +148,27 @@ ws		[ \t\r]+
 "_Imaginary"		{return(_IMAGINARY);}
 
 {id}			{yylval.s=strdup(yytext);	return(IDENT);}
-{char_const}		{yylval.c=charlit_val();	return(CHARLIT);}
+{char_const}		{yylval.s=charlit_val();	return(CHARLIT);}
 {str_lit}		{yylval.s=string_val();		return(STRING);}
 {octint}		{yylval.n=number_val('o');	return(NUMBER);}
 {decint}		{yylval.n=number_val('i');	return(NUMBER);}
 {hexint}		{yylval.n=number_val('h');	return(NUMBER);}
+{deci2f}		{yylval.n=number_val('I');	return(NUMBER);}
+{hexi2f}		{yylval.n=number_val('H');	return(NUMBER);}
 {decflt}		{yylval.n=number_val('I');	return(NUMBER);}
 {hexflt}		{yylval.n=number_val('H');	return(NUMBER);}
+
+{preproc}		{filename=new_filename(); line=1;}
 {newline}		{line++;}
 {ws}			{/*empty*/}
 
 %%
 
-char *char_parse() {
+char *new_filename() {
+	return strndup(yytext+5, strlen(yytext)-7);
+}
+
+char *string_val() {
 	int i, buf_idx;
 	char *buf;
 
@@ -162,18 +178,18 @@ char *char_parse() {
 	buf = (char *) calloc(yyleng-2, sizeof(char));
 
 	/* exclude '' and "" */
-	for (i = 1; i < yyleng-1; i++) {
+	for (i = 1 + (yytext[0] == 'L'); i < yyleng-1; i++) {
 		if (yytext[i] == '\\') {
 			/* esc seq start*/
 			switch (yytext[++i]) { /* first char of esc seq */
+				case '\'': case '\"': case '\\':
 				case '0': case 'a': case 'b':
 				case 'f': case 'n': case 'r':
 				case 't': case 'v':
 					buf[buf_idx++] = '\\';
 					buf[buf_idx++] = yytext[i];
 					break;
-				case '\'': case '\"':
-				case '\?': case '\\':
+				case '\?':
 					buf[buf_idx++] = yytext[i];
 					break;
 				case 'x':
@@ -194,14 +210,11 @@ char *char_parse() {
 	return buf;
 }
 
-char charlit_val() {
-	/* process here using char_parse */
-	return yytext[1];
-}
-
-char *string_val() {
-	/* process here using char_parse*/
-	return strdup(yytext);
+/*  current system cannot handle
+	final character being an esc seq,
+	different methodoloy may be needed  */
+char *charlit_val() {
+	return string_val();
 }
 
 /* determine the type of number,

@@ -1,3 +1,5 @@
+#ifndef YYLVAL_H
+#define YYLVAL_H
 enum numtypes {
     TYPE_I=0,
     TYPE_UI,
@@ -26,5 +28,8 @@ typedef union {
 	TypedNumber n;
 } YYSTYPE;
 
-YYSTYPE yylval;
-int line;
+extern YYSTYPE yylval;
+extern char *filename;
+extern int line;
+
+#endif // YYLVAL_H
