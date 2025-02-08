@@ -169,8 +169,8 @@ char *new_filename() {
 }
 
 char *literal_val(int is_str) {
-	int i, char_done, buf_idx;
-	char *buf;
+	int i, char_done, buf_idx, oct_char;
+	char *buf, *oct_esc, *oct_end;
 
 	char_done = buf_idx = 0;
 
@@ -183,9 +183,9 @@ char *literal_val(int is_str) {
 			/* esc seq start*/
 			switch (yytext[++i]) { /* first char of esc seq */
 				case '\'': case '\"': case '\\':
-				case '0': case 'a': case 'b':
-				case 'f': case 'n': case 'r':
-				case 't': case 'v':
+				case 'a': case 'b': case 'f':
+				case 'n': case 'r': case 't':
+				case 'v':
 					buf[buf_idx++] = '\\';
 					buf[buf_idx++] = yytext[i];
 					break;
@@ -199,7 +199,24 @@ char *literal_val(int is_str) {
 					/* optional, unimplemented */
 					break;
 				default:
-					/* INCOMPLETE: handle non-zero octal esc seq */
+					oct_esc = (char *) calloc(3, sizeof(char));
+					strncpy(oct_esc, yytext + i, 3);
+					oct_char = strtol(oct_esc, &oct_end, 8);
+					i += (oct_end == 0)? 2 : (oct_end - oct_esc) / sizeof(char) - 1;
+					free(oct_esc);
+
+					if (oct_char == 0) {
+						// "\0" -> "\0"
+						buf[buf_idx++] = '\\';
+						buf[buf_idx++] = yytext[i];
+					} else if (oct_char < 32 || oct_char >= 127) {
+						// non-printable or beyond ASCII -> "\\%03o"
+						sprintf(buf + buf_idx, "\\%03o", oct_char);
+						buf_idx += 4;
+					} else {
+						buf[buf_idx++] = '\\';
+						buf[buf_idx++] = (char) oct_char;
+					}
 					break;
 			}
 		} else { /* not in esc seq */
