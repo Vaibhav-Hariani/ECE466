@@ -63,6 +63,5 @@ enum tokens {
 	WHILE,
 	_BOOL,
 	_COMPLEX,
-	_IMAGINARY,
-	PREPROC
+	_IMAGINARY
 };
