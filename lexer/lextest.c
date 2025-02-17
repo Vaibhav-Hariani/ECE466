@@ -4,11 +4,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 extern FILE *yyin;
 extern int yylex();
 
-int printn(const char *filename) {
+void printn() {
 	switch (yylval.n.type) {
 		case TYPE_I:
 			printf("%s\t%d\t%s\t%d\t%s\n",filename, line,
@@ -47,6 +48,55 @@ int printn(const char *filename) {
 				"NUMBER\tREAL", (long double) yylval.n.val.f, "LONGDOUBLE");
 			break;
 	}
+}
+
+void printli(char *li, int size) {
+	int i;
+
+	for (i = 0; i < size; i++) {
+		// everybody say 'thank you C99 w.d. 5.2.2, 7.4.1.8'
+		if (isprint(li[i])) {
+			if (li[i] == '\'' || li[i] == '\"' || li[i] == '\\') {
+				printf("\\%c", li[i]);
+			} else {
+				printf("%c", li[i]);
+			}
+			continue;
+		}
+
+		switch(li[i]) {
+			case '\0':
+				printf("\\0");
+				break;
+			case '\a':
+				printf("\\a");
+				break;
+			case '\b':
+				printf("\\b");
+				break;
+			case '\f':
+				printf("\\f");
+				break;
+			case '\n':
+				printf("\\n");
+				break;
+			case '\r':
+				printf("\\r");
+				break;
+			case '\t':
+				printf("\\t");
+				break;
+			case '\v':
+				printf("\\v");
+				break;
+			default: /* octal esc sequence */
+				printf("\\%03o", (unsigned char) li[i]);
+				break;
+		}
+	}
+
+	printf("\n");
+	return;
 }
 
 char *token_name(int t) {
@@ -185,22 +235,26 @@ char *token_name(int t) {
 
 int main(int argc, char const *argv[]) {
 	int t;
-    char *tok_name;
+	char *cbuf, *tok_name;
+	
 	yyin = stdin;
-
+	cbuf = (char *) calloc(1, sizeof(char));
 	while (t = yylex()) {
 		switch (t) {
 			case IDENT:
-				printf("%s\t%d\t%s\t%s\n", filename, line, "IDENT", yylval.s);
+				printf("%s\t%d\t%s\t%s\n", filename, line, "IDENT", yylval.i);
 				break;
             case CHARLIT:
-                printf("%s\t%d\t%s\t%s\n", filename, line, "CHARLIT", yylval.s);
+                printf("%s\t%d\t%s\t", filename, line, "CHARLIT");
+				cbuf[0] = yylval.c;
+				printli(cbuf, 1);
                 break;
             case STRING:
-                printf("%s\t%d\t%s\t%s\n", filename, line, "STRING", yylval.s);
+				printf("%s\t%d\t%s\t", filename, line, "STRING");
+				printli(yylval.s.li, yylval.s.size);
                 break;
 			case NUMBER:
-				printn(filename);
+				printn();
 				break;
 			default:
                 tok_name = token_name(t);
@@ -210,5 +264,6 @@ int main(int argc, char const *argv[]) {
 		}
 	}
 	
+	free(cbuf);
     return 0;
 }
