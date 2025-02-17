@@ -22,9 +22,15 @@ typedef struct {
 	char type;
 } TypedNumber;
 
+typedef struct {
+    char *li;
+    int size;
+} SizedString;
+
 typedef union {
-	char *s;
+	char *i;
 	char c;
+    SizedString s;
 	TypedNumber n;
 } YYSTYPE;
 
