@@ -238,6 +238,7 @@ int main(int argc, char const *argv[]) {
 	char *cbuf, *tok_name;
 	
 	yyin = stdin;
+	filename = NULL;
 	cbuf = (char *) calloc(1, sizeof(char));
 	while (t = yylex()) {
 		switch (t) {

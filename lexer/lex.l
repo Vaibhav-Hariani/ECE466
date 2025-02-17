@@ -11,7 +11,7 @@ YYSTYPE yylval;
 char *filename;
 int line;
 
-char *new_filename();
+void new_filename();
 void char_lit();
 void str_lit();
 int literal_val(char *buf, int is_str);
@@ -160,15 +160,16 @@ ws			[ \t\r]+
 {decflt}		{number_val('I');			return(NUMBER);}
 {hexflt}		{number_val('H');			return(NUMBER);}
 
-{preproc}		{filename=new_filename(); line=1;}
+{preproc}		{new_filename(); line=1;}
 {newline}		{line++;}
 {ws}			{/*empty*/}
 .				{fprintf(stderr, "%s:%d:Error:Unrecognised token %s\n", filename, line, yytext);}
 
 %%
 
-char *new_filename() {
-	return strndup(yytext+5, strlen(yytext)-7);
+void new_filename() {
+	free(filename);
+	filename = strndup(yytext+5, strlen(yytext)-7);
 }
 
 void char_lit() {
