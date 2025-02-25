@@ -1,11 +1,17 @@
 %start expr
 %token IDENT
 %token NUM
-%token PLUSPLUS, MINUSMINUS
-%token PLUSEQ, MINUSEQ, DIVEQ, TIMESEQ, MODEQ,SHLEQ,SHREQ, ANDEQ,OREQ,XOREQ
-%right '='
+%token 
+    PLUSPLUS "++" 
+    MINUSMINUS "--"
+%left ','
+%right '=' PLUSEQ MINUSEQ DIVEQ TIMESEQ MODE SHLEQ SHREQ ANDEQ OREQ XOREQ
+%right '?' ':'
 %left '+' '-'
-%left '*' '/'
+%left '*' '/' '%'
+%right SIZEOF PREFIX 
+%left '(' ')' '[' ']'  POSTFIX PLUSPLUS MINUSMINUS
+
 %%
 // 2 types of elements
 // expr, and lvalues
@@ -14,55 +20,33 @@
 
 //unops take in an lvalue, and do one of 3 operations to them.
 
-expr: ast_binop
-|  ast_ternop
-|  ast_unop
-|  ast_lvalue
-|  NUM
-|  IDENT
-| '(' expr ')'
-|    expr ',' expr
-| expr ';'
-    ;
-
-ast_binop:   IDENT
+expr: IDENT
+|   ast_binop
+|   ast_ternop
+|   ast_unop
 |   NUM
-| '(' expr ')'
-| expr '+' expr
-| expr '-' expr
-| expr '*' expr
-| expr '/' expr
+|   '(' expr ')'
+|    expr ',' expr    
+|    '*' expr %prec SIZEOF
+|    expr '[' expr ']'
+|    '+' expr %prec SIZEOF
+|   expr '=' expr
+|   expr PLUSEQ expr
+|   expr MINUSEQ expr
+|   expr DIVEQ expr
 ;
 
-ast_ternop:   IDENT
-|   NUM
-| '(' expr ')'
-| expr '+' expr
-| expr '-' expr
-| expr '*' expr
-| expr '/' expr
+ast_binop: expr '+' expr
+|   expr '-' expr
+|   expr '*' expr
+|   expr '/' expr
 ;
 
+ast_ternop: expr '?' expr ':' expr;
 
-ast_unop: ast_lvalue
-|  ast_lvalue PLUSPLUS {$$=$1; $1 = $1+1}
-|  ast_lvalue MINUSMINUS
-|  PLUSPLUS ast_lvalue
-|  MINUSMINUS ast_lvalue
-;
-
-// ternops may need to be included separately for this
-
-ast_lvalue: IDENT
-| asterisks IDENT
-| IDENT '[' expr ']'
-| '&' IDENT
-| expr '?' ast_lvalue ':' ast_lvalue
-| '+' ast_lvalue
-| '(' ast_lvalue ')'
-
-
-asterisks: '*'
-| '*' asterisks
+ast_unop: expr "++" %prec POSTFIX
+|   expr "--" %prec POSTFIX
+|   "++" expr %prec PREFIX
+|   "--" expr %prec PREFIX
 ;
 %%
