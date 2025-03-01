@@ -22,13 +22,6 @@ typedef struct {
 	char type;
 } TypedNumber;
 
-typedef union {
-	char *s;
-	char c;
-	TypedNumber n;
-} YYSTYPE;
-
-extern YYSTYPE yylval;
 extern char *filename;
 extern int line;
 
