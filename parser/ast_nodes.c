@@ -80,4 +80,4 @@ ast_node* new_ast_unop(ast_node* expr, int op, int dir) {
   return node;
 }
 
-ast_node print_ast(ast_node* expr);
+ast_node* print_ast(ast_node* expr);
