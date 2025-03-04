@@ -8,26 +8,17 @@ enum node_type {
     AST_ternop,
     AST_unop,
     AST_varlen,
+    AST_lvalue,
+    AST_assign,
+    AST_special,
     AST_ident,
-    AST_literal,
+    AST_charlit,
     AST_num
 };
 
 enum order {
     PREFIX,
     POSTFIX
-};
-
-
-typedef union ast_node_t {
-    struct binop;
-    struct ternop;
-    struct unop;
-    struct varlen;
-    //Non-recursive types can just live here
-    char* charlit;
-    TypedNumber* num;
-    char* ident;
 };
 
 struct ast_node {
@@ -49,10 +40,23 @@ struct ternop {
     ast_node* expr_3;
 };
 
-struct varlen {
+struct lvalue {
+    ast_node* expr;
+};
+
+
+struct assign {
+    ast_node* lvalue;
+    ast_node* rvalue;
+    int opcode;
+};
+
+struct special {
     ast_node* expr_1;
     ast_node* expr_2;
+    int opcode;
 };
+
 
 struct unop {
     ast_node* expr;
@@ -60,11 +64,29 @@ struct unop {
     int sequence;
 };
 
+
+
+typedef union ast_node_t {
+    struct binop b;
+    struct ternop t;
+    struct unop u;
+    struct lvalue l;
+    struct assign a;
+    //Non-recursive types can just live here
+    char* charlit;
+    TypedNumber* num;
+    char* ident;
+} ast_node_t;
+
+
 ast_node* new_ast_ident(char* c);
 ast_node* new_ast_num(TypedNumber n);
 ast_node* new_ast_charlit(char c);
 
 ast_node* new_ast_binop(int type, ast_node* expr1, ast_node* expr2, int op);
+
+ast_node* new_ast_lvalue(ast_node* expr);
+
 
 ast_node* new_ast_ternop(int type, ast_node* expr1, ast_node* expr2, ast_node* expr3);
 
