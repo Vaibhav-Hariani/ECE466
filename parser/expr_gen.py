@@ -77,7 +77,8 @@ if __name__ == "__main__":
         val = token_db[key]
         if(len(val) == 1):
             val = "'" + val + "'"
-        print("|\t expr %s expr" % val) 
+        print("|\t expr %s expr \t { $$=new_ast_node(AST_binop, $1, $3, %s);}" % (val, val)) 
+        # print(val, end = ' ')
     print ('\n \n')
     # for token in token_db:
     #     print(token, end = ' ')

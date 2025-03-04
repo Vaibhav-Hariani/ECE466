@@ -1,90 +1,56 @@
-|	 expr ';' expr
-|	 expr '+' expr
-|	 expr '-' expr
-|	 expr '*' expr
-|	 expr '/' expr
-|	 expr '%' expr
-|	 expr '>' expr
-|	 expr '<' expr
-|	 expr '=' expr
-|	 expr '.' expr
-|	 expr ',' expr
-|	 expr ':' expr
-|	 expr '?' expr
-|	 expr '&' expr
-|	 expr '|' expr
-|	 expr '!' expr
-|	 expr '^' expr
-|	 expr '~' expr
-|	 expr '(' expr
-|	 expr ')' expr
-|	 expr '[' expr
-|	 expr ']' expr
-|	 expr '{' expr
-|	 expr '}' expr
-|	 expr '[' expr
-|	 expr ']' expr
-|	 expr '{' expr
-|	 expr '}' expr
-|	 expr '#' expr
-|	 expr POUNDPOUND expr
-|	 expr INDSEL expr
-|	 expr PLUSPLUS expr
-|	 expr MINUSMINUS expr
-|	 expr SHL expr
-|	 expr SHR expr
-|	 expr LTEQ expr
-|	 expr GTEQ expr
-|	 expr EQEQ expr
-|	 expr NOTEQ expr
-|	 expr LOGAND expr
-|	 expr LOGOR expr
-|	 expr ELLIPSIS expr
-|	 expr TIMESEQ expr
-|	 expr DIVEQ expr
-|	 expr MODEQ expr
-|	 expr PLUSEQ expr
-|	 expr MINUSEQ expr
-|	 expr SHLEQ expr
-|	 expr SHREQ expr
-|	 expr ANDEQ expr
-|	 expr OREQ expr
-|	 expr XOREQ expr
-|	 expr POUNDPOUND expr
-|	 expr AUTO expr
-|	 expr BREAK expr
-|	 expr CASE expr
-|	 expr CHAR expr
-|	 expr CONST expr
-|	 expr CONTINUE expr
-|	 expr DEFAULT expr
-|	 expr DO expr
-|	 expr DOUBLE expr
-|	 expr ELSE expr
-|	 expr ENUM expr
-|	 expr EXTERN expr
-|	 expr FLOAT expr
-|	 expr FOR expr
-|	 expr GOTO expr
-|	 expr IF expr
-|	 expr INLINE expr
-|	 expr INT expr
-|	 expr LONG expr
-|	 expr REGISTER expr
-|	 expr RESTRICT expr
-|	 expr RETURN expr
-|	 expr SHORT expr
-|	 expr SIGNED expr
-|	 expr SIZEOF expr
-|	 expr STATIC expr
-|	 expr STRUCT expr
-|	 expr SWITCH expr
-|	 expr TYPEDEF expr
-|	 expr UNION expr
-|	 expr UNSIGNED expr
-|	 expr VOID expr
-|	 expr VOLATILE expr
-|	 expr WHILE expr
-|	 expr _BOOL expr
-|	 expr _COMPLEX expr
-|	 expr _IMAGINARY expr
+|	 expr ';' expr 	 { $$=new_ast_node(AST_binop, $1, $3, ';');}
+|	 expr '+' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '+');}
+|	 expr '-' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '-');}
+|	 expr '*' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '*');}
+|	 expr '/' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '/');}
+|	 expr '%' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '%');}
+|	 expr '>' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '>');}
+|	 expr '<' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '<');}
+|	 expr '=' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '=');}
+|	 expr '.' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '.');}
+|	 expr ',' expr 	 { $$=new_ast_node(AST_binop, $1, $3, ',');}
+|	 expr ':' expr 	 { $$=new_ast_node(AST_binop, $1, $3, ':');}
+|	 expr '?' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '?');}
+|	 expr '&' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '&');}
+|	 expr '|' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '|');}
+|	 expr '!' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '!');}
+|	 expr '^' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '^');}
+|	 expr '~' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '~');}
+|	 expr '(' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '(');}
+|	 expr ')' expr 	 { $$=new_ast_node(AST_binop, $1, $3, ')');}
+|	 expr '[' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '[');}
+|	 expr ']' expr 	 { $$=new_ast_node(AST_binop, $1, $3, ']');}
+|	 expr '{' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '{');}
+|	 expr '}' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '}');}
+|	 expr '[' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '[');}
+|	 expr ']' expr 	 { $$=new_ast_node(AST_binop, $1, $3, ']');}
+|	 expr '{' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '{');}
+|	 expr '}' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '}');}
+|	 expr '#' expr 	 { $$=new_ast_node(AST_binop, $1, $3, '#');}
+|	 expr POUNDPOUND expr 	 { $$=new_ast_node(AST_binop, $1, $3, POUNDPOUND);}
+|	 expr INDSEL expr 	 { $$=new_ast_node(AST_binop, $1, $3, INDSEL);}
+|	 expr PLUSPLUS expr 	 { $$=new_ast_node(AST_binop, $1, $3, PLUSPLUS);}
+|	 expr MINUSMINUS expr 	 { $$=new_ast_node(AST_binop, $1, $3, MINUSMINUS);}
+|	 expr SHL expr 	 { $$=new_ast_node(AST_binop, $1, $3, SHL);}
+|	 expr SHR expr 	 { $$=new_ast_node(AST_binop, $1, $3, SHR);}
+|	 expr LTEQ expr 	 { $$=new_ast_node(AST_binop, $1, $3, LTEQ);}
+|	 expr GTEQ expr 	 { $$=new_ast_node(AST_binop, $1, $3, GTEQ);}
+|	 expr EQEQ expr 	 { $$=new_ast_node(AST_binop, $1, $3, EQEQ);}
+|	 expr NOTEQ expr 	 { $$=new_ast_node(AST_binop, $1, $3, NOTEQ);}
+|	 expr LOGAND expr 	 { $$=new_ast_node(AST_binop, $1, $3, LOGAND);}
+|	 expr LOGOR expr 	 { $$=new_ast_node(AST_binop, $1, $3, LOGOR);}
+|	 expr ELLIPSIS expr 	 { $$=new_ast_node(AST_binop, $1, $3, ELLIPSIS);}
+|	 expr TIMESEQ expr 	 { $$=new_ast_node(AST_binop, $1, $3, TIMESEQ);}
+|	 expr DIVEQ expr 	 { $$=new_ast_node(AST_binop, $1, $3, DIVEQ);}
+|	 expr MODEQ expr 	 { $$=new_ast_node(AST_binop, $1, $3, MODEQ);}
+|	 expr PLUSEQ expr 	 { $$=new_ast_node(AST_binop, $1, $3, PLUSEQ);}
+|	 expr MINUSEQ expr 	 { $$=new_ast_node(AST_binop, $1, $3, MINUSEQ);}
+|	 expr SHLEQ expr 	 { $$=new_ast_node(AST_binop, $1, $3, SHLEQ);}
+|	 expr SHREQ expr 	 { $$=new_ast_node(AST_binop, $1, $3, SHREQ);}
+|	 expr ANDEQ expr 	 { $$=new_ast_node(AST_binop, $1, $3, ANDEQ);}
+|	 expr OREQ expr 	 { $$=new_ast_node(AST_binop, $1, $3, OREQ);}
+|	 expr XOREQ expr 	 { $$=new_ast_node(AST_binop, $1, $3, XOREQ);}
+|	 expr POUNDPOUND expr 	 { $$=new_ast_node(AST_binop, $1, $3, POUNDPOUND);}
+
+ 
+
