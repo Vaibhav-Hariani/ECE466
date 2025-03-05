@@ -4,12 +4,21 @@
 
 
 %start terminal
+//Undefined token, but lets parser.tab.h include everything
+%token
+TOKEOF STRING	NUMBER	ELLIPSIS	
+POUNDPOUND	AUTO	BREAK	CASE	CHAR	CONST	
+CONTINUE	DEFAULT	DO	DOUBLE	ELSE	ENUM	
+EXTERN	FLOAT	FOR	GOTO	IF	INLINE	INT	LONG	
+REGISTER	RESTRICT	RETURN	SHORT	SIGNED	STATIC	
+STRUCT	SWITCH	TYPEDEF	UNION	UNSIGNED	VOID	
+VOLATILE	WHILE	_BOOL	_COMPLEX	_IMAGINARY
 %token 
     PLUSPLUS "++" 
     MINUSMINUS "--"
 %left ','
 %right '=' PLUSEQ MINUSEQ DIVEQ TIMESEQ MODEQ SHLEQ SHREQ ANDEQ OREQ XOREQ
-%right '?' ':'
+%right '?' ':'	/* This is where yacc will put it */
 %left LOGAND LOGOR
 %left '&' '^' '|'
 %left  EQEQ NOTEQ
@@ -21,9 +30,10 @@
 %left '(' ')' '[' ']'  POSTFIX PLUSPLUS MINUSMINUS INDSEL '.'
 
 %union {
-	char *s;
+	char *i;
 	char c;
 	TypedNumber n;
+    SizedString s;
     ast_node *node;
 } 
 %code requires {
@@ -33,7 +43,7 @@
 
 
 %nterm <node> expr terminal ast_binop ast_ternop ast_unop ast_assign ast_special ast_lvalue;
-%token <s> IDENT;
+%token <i> IDENT;
 %token <c> CHARLIT;
 %token <n> NUM;
 
@@ -115,7 +125,7 @@ ast_lvalue: IDENT {$$ = new_ast_ident($1);}
 |    '&' expr %prec SIZEOF  {$$ = new_ast_unop($2, '&', PREFIX);}
 //Special case of array indexing
 |   expr '[' expr ']'  {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, $3, '['));}
-|   expr '.' IDENT  {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, $3, '['));}
+|   expr '.' IDENT  {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, $3, '.'));}
 
 ;
 %%

@@ -1,6 +1,6 @@
 %option noyywrap
 %{
-#include "tokens-manual.h"
+#include "parser.tab.h"
 #include "yylval.h"
 #include <string.h>
 #include <stdlib.h>

@@ -1,4 +1,5 @@
 #include "ast_nodes.h"
+#include "parser.tab.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +39,7 @@ ast_node* new_ast_lvalue(ast_node* expr){
 
 ast_node* new_ast_binop(int type, ast_node* expr1, ast_node* expr2, int op) {
   ast_node* node = new_ast_node;
-  switch (type) {
+  switch (op) {
     case AST_binop:
       // if(expr1->type >= AST_charlit && expr2->type >= AST_charlit) {
       // These lines should handle num literal parsing

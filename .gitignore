@@ -1,3 +1,4 @@
 .vscode
 *.tab.*
 *.out
+*.h.gch

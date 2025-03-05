@@ -2,6 +2,7 @@
 #define AST_NODES_H
 
 #include "yylval.h"
+#include "parser.tab.h"
 enum node_type {
     AST_binop=0,
     AST_ternop,
@@ -13,11 +14,6 @@ enum node_type {
     AST_ident,
     AST_charlit,
     AST_num
-};
-
-enum order {
-    PREFIX,
-    POSTFIX
 };
 
 struct ast_node {
