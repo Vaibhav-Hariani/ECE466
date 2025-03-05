@@ -11,9 +11,11 @@ YYSTYPE yylval;
 char *filename;
 int line;
 
-char *new_filename();
-char *literal_val();
-TypedNumber number_val(char type);
+void new_filename();
+void char_lit();
+void str_lit();
+int literal_val(char *buf, int is_str);
+void number_val(char type);
 
 %}
 
@@ -29,7 +31,7 @@ decflt		(([0-9]+\.[0-9]*)|([0-9]*\.[0-9]+))([Ee][\+-]?[0-9]+)?[FLfl]?
 hexflt		0[Xx](([0-9A-Fa-f]+\.[0-9A-Fa-f]*)|([0-9A-Fa-f]*\.[0-9A-Fa-f]+))([Pp][\+-]?[0-9]+)?[FLfl]?
 
 /* from here until str_lit defines: */
-/*  char_const (ref C99 w.d. 6.4.4.4) */
+/*  char_lit (ref C99 w.d. 6.4.4.4) */
 /*  str_lit (ref C99 w.d. 6.5) */
 simple_esc	\\[\'\"\?\\abfnrtv]
 oct_esc		\\[0-7]?[0-7]?[0-7]?
@@ -39,7 +41,7 @@ uni_char	\\(u|(U{hex_quad})){hex_quad}
 esc_seq		{simple_esc}|{oct_esc}|{hex_esc}|{uni_char}
 
 c_char		[^\'\\\n]|{esc_seq}
-char_const	L?\'{c_char}+\'
+char_lit	L?\'{c_char}+\'
 
 s_char		[^\"\\\n]|{esc_seq}
 str_lit		L?\"{s_char}*\"
@@ -147,51 +149,80 @@ ws			[ \t\r]+
 "_Complex"		{return(_COMPLEX);}
 "_Imaginary"	{return(_IMAGINARY);}
 
-{id}			{yylval.s=strdup(yytext);	return(IDENT);}
-{char_const}	{yylval.s=literal_val(0);	return(CHARLIT);}
-{str_lit}		{yylval.s=literal_val(1);	return(STRING);}
-{octint}		{yylval.n=number_val('o');	return(NUMBER);}
-{decint}		{yylval.n=number_val('i');	return(NUMBER);}
-{hexint}		{yylval.n=number_val('h');	return(NUMBER);}
-{deci2f}		{yylval.n=number_val('I');	return(NUMBER);}
-{hexi2f}		{yylval.n=number_val('H');	return(NUMBER);}
-{decflt}		{yylval.n=number_val('I');	return(NUMBER);}
-{hexflt}		{yylval.n=number_val('H');	return(NUMBER);}
+{id}			{yylval.i=strdup(yytext);	return(IDENT);}
+{char_lit}		{char_lit();				return(CHARLIT);}
+{str_lit}		{str_lit();					return(STRING);}
+{octint}		{number_val('o');			return(NUMBER);}
+{decint}		{number_val('i');			return(NUMBER);}
+{hexint}		{number_val('h');			return(NUMBER);}
+{deci2f}		{number_val('I');			return(NUMBER);}
+{hexi2f}		{number_val('H');			return(NUMBER);}
+{decflt}		{number_val('I');			return(NUMBER);}
+{hexflt}		{number_val('H');			return(NUMBER);}
 
-{preproc}		{filename=new_filename(); line=1;}
+{preproc}		{new_filename(); line=1;}
 {newline}		{line++;}
 {ws}			{/*empty*/}
 .				{fprintf(stderr, "%s:%d:Error:Unrecognised token %s\n", filename, line, yytext);}
 
 %%
 
-char *new_filename() {
-	return strndup(yytext+5, strlen(yytext)-7);
+void new_filename() {
+	free(filename);
+	filename = strndup(yytext+5, strlen(yytext)-7);
 }
 
-char *literal_val(int is_str) {
+void char_lit() {
+	literal_val(&yylval.c, 0);
+}
+
+void str_lit() {
+	char *buf;
+	SizedString s;
+
+	buf = (char *) calloc(yyleng-2, sizeof(char));
+	s.size = literal_val(buf, 1);
+	s.li = (char *) realloc(buf, s.size);
+	yylval.s = s;
+}
+
+/*  convert all escape sequences
+	to characters in buf */
+int literal_val(char *buf, int is_str) {
 	int i, char_done, buf_idx, num_char;
-	char *buf, *num_esc, *num_end;
+	char *num_esc, *num_end;
 
 	char_done = buf_idx = 0;
-
-	/* not implementing wide chars */
-	buf = (char *) calloc((is_str)? yyleng-2 : 1, sizeof(char));
 
 	/* exclude '' and "" */
 	for (i = 1 + (yytext[0] == 'L'); i < yyleng-1 && !char_done; i++) {
 		if (yytext[i] == '\\') {
 			/* esc seq start*/
 			switch (yytext[++i]) { /* first char of esc seq */
-				case '\'': case '\"': case '\\':
-				case 'a': case 'b': case 'f':
-				case 'n': case 'r': case 't':
-				case 'v':
-					buf[buf_idx++] = '\\';
+				case '\'': case '\"':
+				case '\\': case '\?':
 					buf[buf_idx++] = yytext[i];
 					break;
-				case '\?':
-					buf[buf_idx++] = yytext[i];
+				case 'a':
+					buf[buf_idx++] = '\a';
+					break;
+				case 'b':
+					buf[buf_idx++] = '\b';
+					break;
+				case 'f':
+					buf[buf_idx++] = '\f';
+					break;
+				case 'n':
+					buf[buf_idx++] = '\n';
+					break;
+				case 'r':
+					buf[buf_idx++] = '\r';
+					break;
+				case 't':
+					buf[buf_idx++] = '\t';
+					break;
+				case 'v':
+					buf[buf_idx++] = '\v';
 					break;
 				case 'u': case 'U':
 					/* optional, unimplemented */
@@ -200,24 +231,14 @@ char *literal_val(int is_str) {
 					num_esc = yytext + i + 1;
 					num_char = strtol(num_esc, &num_end, 16);
 					i += (num_end - num_esc) / sizeof(char);
+
 					if (num_char > 255) { // restrict overflow
 						fprintf(stderr, "%s:%d:Warning:Hex escape sequence \\x%x out of range\n",
 							filename, line, num_char);
 						fflush(stderr);
 						num_char = 255;
 					}
-
-					if (num_char == 0) {
-						// "\x0" -> "\0"
-						buf[buf_idx++] = '\\';
-						buf[buf_idx++] = yytext[i];
-					} else if (num_char < 32 || num_char >= 127) {
-						// non-printable or beyond ASCII -> "\\%03o"
-						sprintf(buf + buf_idx, "\\%03o", num_char);
-						buf_idx += 4;
-					} else {
-						buf[buf_idx++] = (char) num_char;
-					}
+					buf[buf_idx++] = (char) num_char;
 					break;
 				default: /* octal esc sequence */
 					num_esc = (char *) calloc(3, sizeof(char));
@@ -226,17 +247,13 @@ char *literal_val(int is_str) {
 					i += (num_end == 0)? 2 : (num_end - num_esc) / sizeof(char) - 1;
 					free(num_esc);
 
-					if (num_char == 0) {
-						// "\0" -> "\0"
-						buf[buf_idx++] = '\\';
-						buf[buf_idx++] = yytext[i];
-					} else if (num_char < 32 || num_char >= 127) {
-						// non-printable or beyond ASCII -> "\\%03o"
-						sprintf(buf + buf_idx, "\\%03o", num_char);
-						buf_idx += 4;
-					} else {
-						buf[buf_idx++] = (char) num_char;
+					if (num_char > 255) { // restrict overflow
+						fprintf(stderr, "%s:%d:Warning:Oct escape sequence \\o%o out of range\n",
+							filename, line, num_char);
+						fflush(stderr);
+						num_char = 255;
 					}
+					buf[buf_idx++] = (char) num_char;
 					break;
 			}
 		} else { /* not in esc seq */
@@ -251,13 +268,12 @@ char *literal_val(int is_str) {
 			filename, line);
 		fflush(stderr);
 	}
-
-	return buf;
+	return buf_idx;
 }
 
 /* determine the type of number,
    store in TypedNumber number */
-TypedNumber number_val(char type) {
+void number_val(char type) {
 	TypedNumber tn;
 
 	if (type == 'o' || type == 'i' || type == 'h') { /* integer */
@@ -281,27 +297,6 @@ TypedNumber number_val(char type) {
 				filename, line);
 			fflush(stderr);
 		}
-
-		/*	below we try to determine the correct type
-			if not adequately specified with a suffix
-		
-			when an int's type needs to grow,
-			we make it longer before we make it unsigned
-			e.g. int 3000000000 becomes long int rather than unsigned int
-			this was an arbitrary decision and theoretically more costly,
-			but avoids erroneous unsigning.  */
-		
-		if (tn.type == TYPE_I && tn.val.i > INT_MAX) {
-			tn.type = TYPE_LI;
-		}
-
-		if (tn.type == TYPE_LI && tn.val.i > LONG_MAX) {
-			tn.type = TYPE_LLI;
-		}
-
-		if (tn.type == TYPE_LLI && tn.val.i > LLONG_MAX) {
-			tn.type = TYPE_ULLI;
-		}
 	}	
 
 	else { /* floating */
@@ -320,5 +315,5 @@ TypedNumber number_val(char type) {
 		}
 	}
 
-	return tn;
+	yylval.n = tn;
 }
