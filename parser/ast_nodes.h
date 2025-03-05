@@ -1,7 +1,6 @@
 #ifndef AST_NODES_H
 #define AST_NODES_H
 
-#include "tokens-manual.h"
 #include "yylval.h"
 enum node_type {
     AST_binop=0,
@@ -51,6 +50,7 @@ struct assign {
     int opcode;
 };
 
+//Special struct for function calls
 struct special {
     ast_node* expr_1;
     ast_node* expr_2;
@@ -67,11 +67,12 @@ struct unop {
 
 
 typedef union ast_node_t {
-    struct binop b;
-    struct ternop t;
-    struct unop u;
-    struct lvalue l;
-    struct assign a;
+    struct binop* b;
+    struct ternop* t;
+    struct unop* u;
+    struct lvalue* l;
+    struct assign* a;
+    struct special* s;
     //Non-recursive types can just live here
     char* charlit;
     TypedNumber* num;
@@ -93,5 +94,7 @@ ast_node* new_ast_ternop(int type, ast_node* expr1, ast_node* expr2, ast_node* e
 ast_node* new_ast_unop(ast_node* expr, int op, int dir);
 
 ast_node* print_ast(ast_node* expr);
+
+void print_recurse(ast_node* expr, int num_tabs);
 
 #endif

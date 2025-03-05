@@ -1,3 +1,8 @@
+%{
+    #include "parser.tab.h"
+%}
+
+
 %start terminal
 %token 
     PLUSPLUS "++" 
@@ -39,7 +44,8 @@
 // as such, they can be ternarys, pointers, or identifiers. Nothing else.
 //unops take in an lvalue, and do one of 3 operations to them.
 
-terminal: expr ';' {$$ = print_ast($1);};
+terminal: expr ';' {$$ = print_ast($1);} /* | ';' */
+;
 
 expr: NUM {$$ = new_ast_num($1);}
 |   CHARLIT {$$ = new_ast_charlit($1);}
@@ -64,7 +70,7 @@ ast_binop: expr '+' expr   { $$=new_ast_binop(AST_binop, $1, $3, '+');}
 |   expr ',' expr    { $$=new_ast_binop(AST_binop, $1, $3, ',');}
 ;
 //separated here so theat lvalues can be handled properly later on in the system
-ast_assign:expr '=' expr   { $$=new_ast_binop(AST_binop, $1, $3, '=');}
+ast_assign:expr '=' expr   { $$=new_ast_binop(AST_assign, $1, $3, '=');}
 |   expr SHL expr 	 { $$=new_ast_binop(AST_assign, $1, $3, SHL);}
 |	expr SHR expr 	 { $$=new_ast_binop(AST_assign, $1, $3, SHR);}
 |   expr LTEQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, LTEQ);}
@@ -86,7 +92,7 @@ ast_assign:expr '=' expr   { $$=new_ast_binop(AST_binop, $1, $3, '=');}
 ;
 
 //Special object type for function calls
-ast_special: expr '.' '(' expr ')' { $$=new_ast_binop(AST_special, $1, $4, ')');}
+ast_special: expr '(' expr ')' { $$=new_ast_binop(AST_special, $1, $3, ')');}
 ;
 
 ast_ternop: expr '?' expr ':' expr {    $$=new_ast_ternop(AST_ternop, $1, $3, $5);}
@@ -109,5 +115,7 @@ ast_lvalue: IDENT {$$ = new_ast_ident($1);}
 |    '&' expr %prec SIZEOF  {$$ = new_ast_unop($2, '&', PREFIX);}
 //Special case of array indexing
 |   expr '[' expr ']'  {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, $3, '['));}
+|   expr '.' IDENT  {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, $3, '['));}
+
 ;
 %%
