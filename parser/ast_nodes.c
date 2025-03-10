@@ -10,21 +10,21 @@
 ast_node* new_ast_ident(char* c) {
   ast_node* node = new_ast_node;
   node->type = AST_ident;
-  node->obj->ident = c;
+  node->obj.ident = c;
   return node;
 }
 
 ast_node* new_ast_num(TypedNumber n) {
   ast_node* node = new_ast_node;
   node->type = AST_num;
-  node->obj->num = &n;
+  node->obj.num = &n;
   return node;
 }
 
 ast_node* new_ast_charlit(char c) {
   ast_node* node = new_ast_node;
   node->type = AST_charlit;
-  node->obj->charlit = &c;
+  node->obj.charlit = &c;
   return node;
 }
 
@@ -33,7 +33,7 @@ ast_node* new_ast_lvalue(ast_node* expr){
   lval ->expr = expr;  
   ast_node* node = new_ast_node;
   node->type=AST_lvalue;
-  node->obj->l = lval;
+  node->obj.l = lval;
   return expr;
 }
 
@@ -50,7 +50,7 @@ ast_node* new_ast_binop(int type, ast_node* expr1, ast_node* expr2, int op) {
       bin->expr_2 = expr2;
       bin->opcode = op;
 
-      node->obj->b = bin;
+      node->obj.b = bin;
       break;
     case AST_assign:    
       struct assign* obj = calloc(1, sizeof(struct assign));
@@ -59,7 +59,7 @@ ast_node* new_ast_binop(int type, ast_node* expr1, ast_node* expr2, int op) {
       obj->opcode = op;
 
       node->type = AST_assign;
-      node->obj->a = obj;
+      node->obj.a = obj;
 
       //hackier lvalue handling
       if(expr1->type != AST_lvalue){
@@ -74,7 +74,7 @@ ast_node* new_ast_binop(int type, ast_node* expr1, ast_node* expr2, int op) {
       spec->expr_2 = expr2;
 
       node->type = AST_special;
-      node->obj->s = spec;
+      node->obj.s = spec;
       break;
     default:
       printf("Something went wrong");
@@ -92,7 +92,7 @@ ast_node* new_ast_ternop(int type, ast_node* expr1, ast_node* expr2,
   obj->expr_1 = expr1;
   obj->expr_2 = expr2;
   obj->expr_3 = expr3;
-  node->obj->t = obj;
+  node->obj.t = obj;
   return node;
 }
 
@@ -114,11 +114,13 @@ ast_node* print_ast(ast_node* expr) {
 
 void print_recurse(ast_node* expr, int num_tabs) {
   char arr[num_tabs];
+  char* c;
+
   memset(arr,'\t', num_tabs);
   fprintf(stderr, "%s", arr);
   switch (expr->type) {
     case AST_binop:
-      struct binop* b = expr->obj->b;      
+      struct binop* b = expr->obj.b;      
       if(b->opcode < 255){
         fprintf(stderr, "BINARY OP %c \n", b->opcode);
       } else fprintf(stderr, "BINARY OP %d \n", b->opcode);
@@ -127,7 +129,7 @@ void print_recurse(ast_node* expr, int num_tabs) {
           /* code */
           break;
     case AST_ternop:
-      struct ternop* t = expr->obj->t;      
+      struct ternop* t = expr->obj.t;      
       fprintf(stderr, "TERNARY \n EXPR 1: \n");
       print_recurse(t->expr_1, num_tabs+1);
       fprintf(stderr, "EXPR 2: \n");
@@ -136,8 +138,7 @@ void print_recurse(ast_node* expr, int num_tabs) {
       print_recurse(t->expr_3, num_tabs+1);
       break;
     case AST_unop:
-      struct unop* u = expr->obj->u;      
-      char* c;
+      struct unop* u = expr->obj.u;      
       if(u->sequence == PREFIX){
         if(b->opcode < 255){
           fprintf(stderr, "UNARY OP %c PREFIX \n", b->opcode);
@@ -150,7 +151,7 @@ void print_recurse(ast_node* expr, int num_tabs) {
       print_recurse(u->expr, num_tabs+1);  
       break;
     case AST_assign:
-      struct assign* a = expr->obj->a; 
+      struct assign* a = expr->obj.a; 
       if(a->opcode < 255){
         fprintf(stderr, "ASSIGNMENT %c, \n", a->opcode % 255);
       }     
@@ -158,23 +159,23 @@ void print_recurse(ast_node* expr, int num_tabs) {
       print_recurse(a->rvalue, num_tabs+1);
       break;
     case AST_lvalue:
-      struct lvalue* l = expr->obj->l;
+      struct lvalue* l = expr->obj.l;
       fprintf(stderr, "LVAL: \n");
       print_recurse(l->expr, num_tabs);
       break;
     case AST_charlit:
-      char* c = expr->obj->charlit;
+      c = expr->obj.charlit;
       fprintf(stderr, "CHARLIT %c: \n", *c);
       break;
     case AST_num:
-      TypedNumber* n = expr->obj->num;
+      TypedNumber* n = expr->obj.num;
       fprintf(stderr, "NUMLIT %d: \n", n);
       break;
     case AST_ident:
-      char* ident = expr->obj->ident;
+      char* ident = expr->obj.ident;
       fprintf(stderr, "IDENT: %s \n", ident);
     case AST_special:
-      struct special* s = expr->obj->s;
+      struct special* s = expr->obj.s;
       fprintf(stderr, "FUNCTION CALL: \n");
       fprintf(stderr, "Function \n");
       print_recurse(s->expr_1, num_tabs+1);

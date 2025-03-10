@@ -2,7 +2,7 @@
 #define AST_NODES_H
 
 #include "yylval.h"
-#include "parser.tab.h"
+
 enum node_type {
     AST_binop=0,
     AST_ternop,
@@ -15,14 +15,7 @@ enum node_type {
     AST_charlit,
     AST_num
 };
-
-struct ast_node {
-    //Reference to what obj is
-    int type;
-    //the object itself
-    union ast_node_t* obj;   
-} typedef ast_node;
-
+struct ast_node typedef ast_node;
 struct binop {
     ast_node* expr_1;
     ast_node* expr_2;
@@ -60,8 +53,6 @@ struct unop {
     int sequence;
 };
 
-
-
 typedef union ast_node_t {
     struct binop* b;
     struct ternop* t;
@@ -74,6 +65,18 @@ typedef union ast_node_t {
     TypedNumber* num;
     char* ident;
 } ast_node_t;
+
+
+struct ast_node { 
+    //Reference to what obj is
+    int type;
+    //the object itself
+    union ast_node_t obj;   
+} typedef ast_node;
+
+
+
+
 
 
 ast_node* new_ast_ident(char* c);

@@ -27,14 +27,14 @@ typedef struct {
     int size;
 } SizedString;
 
-typedef union {
-	char *i;
-	char c;
-    SizedString s;
-	TypedNumber n;
-} YYSTYPE;
+// typedef union {
+// 	char *i;
+// 	char c;
+//     SizedString s;
+// 	TypedNumber n;
+// } YYSTYPE;
 
-extern YYSTYPE yylval;
+// extern YYSTYPE yylval;
 extern char *filename;
 extern int line;
 

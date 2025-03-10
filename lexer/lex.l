@@ -7,7 +7,7 @@
 #include <limits.h>
 #include <errno.h>
 
-YYSTYPE yylval;
+// YYSTYPE yylval;
 char *filename;
 int line;
 

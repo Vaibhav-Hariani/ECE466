@@ -1,6 +1,8 @@
 %{
-    #include "parser.tab.h"
-%}
+     #include "parser.tab.h"
+     void yyerror(const char * s);
+     int yylex(void);
+ %}
 
 
 %start terminal
@@ -39,6 +41,7 @@ VOLATILE	WHILE	_BOOL	_COMPLEX	_IMAGINARY
 %code requires {
     #include "yylval.h"
     #include "ast_nodes.h"
+    #include <stdio.h>
 }
 
 
@@ -111,7 +114,7 @@ ast_unop: expr "++" %prec POSTFIX {$$ = new_ast_unop($1, PLUSPLUS, POSTFIX);}
 |   expr "--" %prec POSTFIX {$$ = new_ast_unop($1, MINUSMINUS, POSTFIX);}
 |   "++" expr %prec PREFIX {$$ = new_ast_unop($2, PLUSPLUS, PREFIX);}
 |   "--" expr %prec PREFIX {$$ = new_ast_unop($2, MINUSMINUS, PREFIX);}
-|   '(' expr ')' {$$ = $2}
+|   '(' expr ')'            {$$=$2;}
 |    '+' expr %prec SIZEOF  {$$ = new_ast_unop($2, '+', PREFIX);}
 |    '!' expr %prec SIZEOF  {$$ = new_ast_unop($2, '!', PREFIX);}
 |    '~' expr %prec SIZEOF  {$$ = new_ast_unop($2, '~', PREFIX);}
@@ -121,11 +124,19 @@ ast_unop: expr "++" %prec POSTFIX {$$ = new_ast_unop($1, PLUSPLUS, POSTFIX);}
 //A hacky way of handling lvalues. They're nodes of other types, but just specified differently 
 ast_lvalue: IDENT {$$ = new_ast_ident($1);}
 |    '*' expr %prec SIZEOF {$$ = new_ast_lvalue(new_ast_unop($2, '*', PREFIX));}
-|    expr INDSEL IDENT {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, $3, INDSEL));}
+|    expr INDSEL IDENT {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, new_ast_ident($3), INDSEL));}
 |    '&' expr %prec SIZEOF  {$$ = new_ast_unop($2, '&', PREFIX);}
 //Special case of array indexing
 |   expr '[' expr ']'  {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, $3, '['));}
-|   expr '.' IDENT  {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, $3, '.'));}
+|   expr '.' IDENT  {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, new_ast_ident($3), '.'));}
 
 ;
 %%
+
+void yyerror(const char *s){
+    fprintf(stderr, "oops, something went wrong: %s \n", s);
+}
+
+int main(int argc, char** argv){
+    yyparse(); 
+} 
