@@ -8,7 +8,7 @@
 
 //Undefined token, but lets parser.tab.h include everything
 %token
-TOKEOF STRING	NUMBER	ELLIPSIS	
+TOKEOF	ELLIPSIS	
 POUNDPOUND	AUTO	BREAK	CASE	CHAR	CONST	
 CONTINUE	DEFAULT	DO	DOUBLE	ELSE	ENUM	
 EXTERN	FLOAT	FOR	GOTO	IF	INLINE	INT	LONG	
@@ -45,11 +45,11 @@ VOLATILE	WHILE	_BOOL	_COMPLEX	_IMAGINARY
 }
 
 
-%nterm <node> expr terminal ast_binop ast_ternop ast_unop ast_assign ast_special ast_lvalue;
+%nterm <node> expr terminal ast_binop ast_ternop ast_unop ast_assign ast_special ast_lvalue 
 %token <i> IDENT;
 %token <c> CHARLIT;
 %token <n> NUM;
-
+%token <s> STRING;
 %start terminal
 %%
 // 2 types of elements
@@ -65,6 +65,7 @@ terminal: %empty
 
 expr: NUM {$$ = new_ast_num($1);}
 |   CHARLIT {$$ = new_ast_charlit($1);}
+|   STRING {$$ = new_ast_string($1);}
 |   ast_binop {$$ = $1;}
 |   ast_unop {$$ = $1;}
 |   ast_assign {$$=$1;}
