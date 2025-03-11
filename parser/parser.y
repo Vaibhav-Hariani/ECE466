@@ -63,7 +63,6 @@ terminal: expr ';' {$$ = print_ast($1);} /* | ';' */
 expr: NUM {$$ = new_ast_num($1);}
 |   CHARLIT {$$ = new_ast_charlit($1);}
 |   ast_binop {$$ = $1;}
-|   ast_ternop {$$ = $1;}
 |   ast_unop {$$ = $1;}
 |   ast_assign {$$=$1;}
 |   ast_lvalue {$$=$1;}
@@ -122,14 +121,14 @@ ast_unop: expr "++" %prec POSTFIX {$$ = new_ast_unop($1, PLUSPLUS, POSTFIX);}
 
 
 //A hacky way of handling lvalues. They're nodes of other types, but just specified differently 
-ast_lvalue: IDENT {$$ = new_ast_ident($1);}
+ast_lvalue: IDENT {$$ = new_ast_lvalue(new_ast_ident($1));}
 |    '*' expr %prec SIZEOF {$$ = new_ast_lvalue(new_ast_unop($2, '*', PREFIX));}
 |    expr INDSEL IDENT {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, new_ast_ident($3), INDSEL));}
 |    '&' expr %prec SIZEOF  {$$ = new_ast_unop($2, '&', PREFIX);}
 //Special case of array indexing
 |   expr '[' expr ']'  {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, $3, '['));}
 |   expr '.' IDENT  {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, new_ast_ident($3), '.'));}
-
+| ast_ternop {$$ = new_ast_lvalue($1);};
 ;
 %%
 
