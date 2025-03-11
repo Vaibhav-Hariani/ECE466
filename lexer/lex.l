@@ -152,13 +152,13 @@ ws			[ \t\r]+
 {id}			{yylval.i=strdup(yytext);	return(IDENT);}
 {char_lit}		{char_lit();				return(CHARLIT);}
 {str_lit}		{str_lit();					return(STRING);}
-{octint}		{number_val('o');			return(NUMBER);}
-{decint}		{number_val('i');			return(NUMBER);}
-{hexint}		{number_val('h');			return(NUMBER);}
-{deci2f}		{number_val('I');			return(NUMBER);}
-{hexi2f}		{number_val('H');			return(NUMBER);}
-{decflt}		{number_val('I');			return(NUMBER);}
-{hexflt}		{number_val('H');			return(NUMBER);}
+{octint}		{number_val('o');			return(NUM);}
+{decint}		{number_val('i');			return(NUM);}
+{hexint}		{number_val('h');			return(NUM);}
+{deci2f}		{number_val('I');			return(NUM);}
+{hexi2f}		{number_val('H');			return(NUM);}
+{decflt}		{number_val('I');			return(NUM);}
+{hexflt}		{number_val('H');			return(NUM);}
 
 {preproc}		{new_filename(); line=1;}
 {newline}		{line++;}

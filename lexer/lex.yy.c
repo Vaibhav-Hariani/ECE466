@@ -1548,37 +1548,37 @@ YY_RULE_SETUP
 case 94:
 YY_RULE_SETUP
 #line 155 "lex.l"
-{number_val('o');			return(NUMBER);}
+{number_val('o');			return(NUM);}
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
 #line 156 "lex.l"
-{number_val('i');			return(NUMBER);}
+{number_val('i');			return(NUM);}
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
 #line 157 "lex.l"
-{number_val('h');			return(NUMBER);}
+{number_val('h');			return(NUM);}
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
 #line 158 "lex.l"
-{number_val('I');			return(NUMBER);}
+{number_val('I');			return(NUM);}
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
 #line 159 "lex.l"
-{number_val('H');			return(NUMBER);}
+{number_val('H');			return(NUM);}
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
 #line 160 "lex.l"
-{number_val('I');			return(NUMBER);}
+{number_val('I');			return(NUM);}
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
 #line 161 "lex.l"
-{number_val('H');			return(NUMBER);}
+{number_val('H');			return(NUM);}
 	YY_BREAK
 case 101:
 /* rule 101 can match eol */

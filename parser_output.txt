@@ -1,0 +1,14 @@
+BINARY OP , 
+	ASSIGNMENT '= ', 
+	 LVAL: 
+				IDENT: a 
+	 RVAL: 
+				IDENT: b 
+		 LVAL: 
+				IDENT: c 
+	 RVAL: 
+		BINARY OP / 
+			UNARY OP - PREFIX 
+				NUMLIT -1847609424: 
+						IDENT: d 
+Error: syntax error 

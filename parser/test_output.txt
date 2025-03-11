@@ -1,0 +1,7 @@
+No File Specified 
+ASSIGNMENT '= ', 
+ LVAL: 
+		IDENT: a 
+ RVAL: 
+	UNARY OP - PREFIX 
+		NUMLIT -17840: 

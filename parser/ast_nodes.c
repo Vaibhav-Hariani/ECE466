@@ -104,6 +104,7 @@ ast_node* new_ast_unop(ast_node* expr, int op, int dir) {
   obj->expr = expr;
   obj->opcode = op;
   obj->sequence = dir;
+  node->obj.u = obj;
   return node;
 }
 
@@ -149,10 +150,10 @@ void print_recurse(ast_node* expr, int num_tabs) {
     case AST_unop:
       struct unop* u = expr->obj.u;
       char* pre_post = (u->sequence == PREFIX) ? "PREFIX" : "POSTFIX";
-        if (b->opcode < 255) {
-          fprintf(stderr, "UNARY OP %c %s \n", b->opcode, pre_post);
+        if (u->opcode < 255) {
+          fprintf(stderr, "UNARY OP %c %s \n", u->opcode, pre_post);
         } else {
-          fprintf(stderr, "UNARY OP %d %s \n", b->opcode, pre_post);
+          fprintf(stderr, "UNARY OP %d %s \n", u->opcode, pre_post);
       }
       print_recurse(u->expr, num_tabs + 1);
       break;
@@ -176,7 +177,7 @@ void print_recurse(ast_node* expr, int num_tabs) {
 
     case AST_charlit:
       c = expr->obj.charlit;
-      fprintf(stderr, "CHARLIT %c: \n", *c);
+      fprintf(stderr, "CHARLIT %c: \n", c);
       break;
 
     case AST_num:
