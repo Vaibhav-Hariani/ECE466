@@ -2,10 +2,10 @@
      #include "parser.tab.h"
      void yyerror(const char * s);
      int yylex(void);
+     extern FILE *yyin;
  %}
 
 
-%start terminal
 //Undefined token, but lets parser.tab.h include everything
 %token
 TOKEOF STRING	NUMBER	ELLIPSIS	
@@ -50,6 +50,7 @@ VOLATILE	WHILE	_BOOL	_COMPLEX	_IMAGINARY
 %token <c> CHARLIT;
 %token <n> NUM;
 
+%start terminal
 %%
 // 2 types of elements
 // expr, and lvalues
@@ -57,8 +58,10 @@ VOLATILE	WHILE	_BOOL	_COMPLEX	_IMAGINARY
 // as such, they can be ternarys, pointers, or identifiers. Nothing else.
 //unops take in an lvalue, and do one of 3 operations to them.
 
-terminal: expr ';' {$$ = print_ast($1);} /* | ';' */
+terminal: %empty
+| terminal expr ';'  {$$ = print_ast($2);}
 ;
+
 
 expr: NUM {$$ = new_ast_num($1);}
 |   CHARLIT {$$ = new_ast_charlit($1);}
@@ -93,7 +96,7 @@ ast_assign:expr '=' expr   { $$=new_ast_binop(AST_assign, $1, $3, '=');}
 |	expr PLUSEQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, PLUSEQ);}
 |	expr MINUSEQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, MINUSEQ);}
 |	expr SHLEQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, SHLEQ);}
-|	expr SHREQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, SHREQ);}
+|	expr SHREQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, SHLEQ);}
 |	expr ANDEQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, ANDEQ);}
 |	expr OREQ expr 	     { $$=new_ast_binop(AST_assign, $1, $3, OREQ);}
 |	expr XOREQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, XOREQ);}
@@ -104,22 +107,21 @@ ast_assign:expr '=' expr   { $$=new_ast_binop(AST_assign, $1, $3, '=');}
 ;
 
 //Special object type for function calls
-ast_special: expr '(' expr ')' { $$=new_ast_binop(AST_special, $1, $3, ')');}
-;
+ast_special: expr '(' expr ')' { $$=new_ast_binop(AST_special, $1, $3, ')');};
 
-ast_ternop: expr '?' expr ':' expr {    $$=new_ast_ternop(AST_ternop, $1, $3, $5);}
-;
+ast_ternop: expr '?' expr ':' expr {    $$=new_ast_ternop(AST_ternop, $1, $3, $5);};
+
 ast_unop: expr "++" %prec POSTFIX {$$ = new_ast_unop($1, PLUSPLUS, POSTFIX);}
 |   expr "--" %prec POSTFIX {$$ = new_ast_unop($1, MINUSMINUS, POSTFIX);}
 |   "++" expr %prec PREFIX {$$ = new_ast_unop($2, PLUSPLUS, PREFIX);}
 |   "--" expr %prec PREFIX {$$ = new_ast_unop($2, MINUSMINUS, PREFIX);}
 |   '(' expr ')'            {$$=$2;}
-|    '+' expr %prec SIZEOF  {$$ = new_ast_unop($2, '+', PREFIX);}
-|    '!' expr %prec SIZEOF  {$$ = new_ast_unop($2, '!', PREFIX);}
-|    '~' expr %prec SIZEOF  {$$ = new_ast_unop($2, '~', PREFIX);}
+|   '+' expr %prec SIZEOF  {$$ = new_ast_unop($2, '+', PREFIX);}
+|   '-' expr %prec PREFIX {$$= new_ast_unop($2, '-', PREFIX);}
+|   '!' expr %prec SIZEOF  {$$ = new_ast_unop($2, '!', PREFIX);}
+|   '~' expr %prec SIZEOF  {$$ = new_ast_unop($2, '~', PREFIX);}
+|   SIZEOF expr {$$ = new_ast_unop($2, SIZEOF, PREFIX);}
 ;
-
-
 //A hacky way of handling lvalues. They're nodes of other types, but just specified differently 
 ast_lvalue: IDENT {$$ = new_ast_lvalue(new_ast_ident($1));}
 |    '*' expr %prec SIZEOF {$$ = new_ast_lvalue(new_ast_unop($2, '*', PREFIX));}
@@ -129,13 +131,37 @@ ast_lvalue: IDENT {$$ = new_ast_lvalue(new_ast_ident($1));}
 |   expr '[' expr ']'  {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, $3, '['));}
 |   expr '.' IDENT  {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, new_ast_ident($3), '.'));}
 | ast_ternop {$$ = new_ast_lvalue($1);};
-;
 %%
 
+/* #ifdef YYDEBUG
+    extern int yydebug = 1;
+#endif */
+
+
 void yyerror(const char *s){
-    fprintf(stderr, "oops, something went wrong: %s \n", s);
+    fprintf(stderr, "Error: %s \n", s);
 }
 
 int main(int argc, char** argv){
-    yyparse(); 
+    FILE *file;
+    if(argc < 2) {
+        /* yyerror("No File Specified");
+        return 0; */
+        yyin = stdin;
+        fprintf(stderr, "No File Specified \n");
+    } else {
+        file = fopen(argv[1],"r");
+        if(!file) {
+            yyerror("No valid file specified");
+            return 0;
+        }
+        yyin = file;
+    }
+    yyparse();
+        if(yyin != stdin) {
+        fclose(file);    
+    }
+
+    return 0;
+    /* yyparse();  */
 } 
