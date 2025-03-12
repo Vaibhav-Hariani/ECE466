@@ -1,6 +1,5 @@
 %{
      #include "parser.tab.h"
-     void yyerror(const char * s);
      int yylex(void);
      extern FILE *yyin;
  %}
@@ -14,7 +13,7 @@ CONTINUE	DEFAULT	DO	DOUBLE	ELSE	ENUM
 EXTERN	FLOAT	FOR	GOTO	IF	INLINE	INT	LONG	
 REGISTER	RESTRICT	RETURN	SHORT	SIGNED	STATIC	
 STRUCT	SWITCH	TYPEDEF	UNION	UNSIGNED	VOID	
-VOLATILE	WHILE	_BOOL	_COMPLEX	_IMAGINARY
+VOLATILE	WHILE	BOOL	COMPLEX	IMAGINARY
 %token 
     PLUSPLUS "++" 
     MINUSMINUS "--"
@@ -42,10 +41,11 @@ VOLATILE	WHILE	_BOOL	_COMPLEX	_IMAGINARY
     #include "yylval.h"
     #include "ast_nodes.h"
     #include <stdio.h>
+    void yyerror(const char * s);
 }
 
 
-%nterm <node> expr terminal ast_binop ast_ternop ast_unop ast_assign ast_special ast_lvalue 
+%nterm <node> expr terminal ast_binop ast_ternop ast_unop ast_assign ast_lvalue 
 %token <i> IDENT;
 %token <c> CHARLIT;
 %token <n> NUM;
@@ -58,7 +58,7 @@ VOLATILE	WHILE	_BOOL	_COMPLEX	_IMAGINARY
 // as such, they can be ternarys, pointers, or identifiers. Nothing else.
 //unops take in an lvalue, and do one of 3 operations to them.
 
-terminal: %empty
+terminal: %empty {$$=0;}
 | terminal expr ';'  {$$ = print_ast($2);}
 ;
 
@@ -70,7 +70,8 @@ expr: NUM {$$ = new_ast_num($1);}
 |   ast_unop {$$ = $1;}
 |   ast_assign {$$=$1;}
 |   ast_lvalue {$$=$1;}
-|   ast_special{$$=$1;}
+|   '(' expr ')'            {$$=$2;}
+
 ;
 
 ast_binop: expr '+' expr   { $$=new_ast_binop(AST_binop, $1, $3, '+');}
@@ -84,13 +85,22 @@ ast_binop: expr '+' expr   { $$=new_ast_binop(AST_binop, $1, $3, '+');}
 |	 expr '|' expr 	 { $$=new_ast_binop(AST_binop, $1, $3, '|');}
 |    expr '^' expr   { $$=new_ast_binop(AST_binop, $1, $3, '^');}
 |   expr ',' expr    { $$=new_ast_binop(AST_binop, $1, $3, ',');}
+|	expr EQEQ expr 	     { $$=new_ast_binop(AST_binop, $1, $3, EQEQ);}
+|	expr NOTEQ expr 	 { $$=new_ast_binop(AST_binop, $1, $3, NOTEQ);}
+|	expr LOGAND expr 	 { $$=new_ast_binop(AST_binop, $1, $3, LOGAND);}
+|	expr LOGOR expr 	 { $$=new_ast_binop(AST_binop, $1, $3, LOGOR);}
+|   expr LTEQ expr 	 { $$=new_ast_binop(AST_binop, $1, $3, LTEQ);}
+|	expr GTEQ expr 	 { $$=new_ast_binop(AST_binop, $1, $3, GTEQ);}
+//Special object type for objects with (potentially) 2 arguments, but aren't actually binops
+|   expr '(' expr ')' { $$=new_ast_binop(AST_special, $1, $3, ')');};
+|   expr '(' ')'    { $$=new_ast_binop(AST_special, $1, 0, ')');};
 ;
+
+
 //separated here so theat lvalues can be handled properly later on in the system
-ast_assign:expr '=' expr   { $$=new_ast_binop(AST_assign, $1, $3, '=');}
+ast_assign: expr '=' expr   { $$=new_ast_binop(AST_assign, $1, $3, '=');}
 |   expr SHL expr 	 { $$=new_ast_binop(AST_assign, $1, $3, SHL);}
 |	expr SHR expr 	 { $$=new_ast_binop(AST_assign, $1, $3, SHR);}
-|   expr LTEQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, LTEQ);}
-|	expr GTEQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, GTEQ);}
 |	expr TIMESEQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, TIMESEQ);}
 |	expr DIVEQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, DIVEQ);}
 |	expr MODEQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, MODEQ);}
@@ -101,37 +111,58 @@ ast_assign:expr '=' expr   { $$=new_ast_binop(AST_assign, $1, $3, '=');}
 |	expr ANDEQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, ANDEQ);}
 |	expr OREQ expr 	     { $$=new_ast_binop(AST_assign, $1, $3, OREQ);}
 |	expr XOREQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, XOREQ);}
-|	expr EQEQ expr 	     { $$=new_ast_binop(AST_assign, $1, $3, EQEQ);}
-|	expr NOTEQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, NOTEQ);}
-|	expr LOGAND expr 	 { $$=new_ast_binop(AST_assign, $1, $3, LOGAND);}
-|	expr LOGOR expr 	 { $$=new_ast_binop(AST_assign, $1, $3, LOGOR);}
 ;
 
-//Special object type for function calls
-ast_special: expr '(' expr ')' { $$=new_ast_binop(AST_special, $1, $3, ')');};
 
-ast_ternop: expr '?' expr ':' expr {    $$=new_ast_ternop(AST_ternop, $1, $3, $5);};
+ast_ternop: expr '?' expr ':' expr {$$=new_ast_ternop(AST_ternop, $1, $3, $5);};
 
 ast_unop: expr "++" %prec POSTFIX {$$ = new_ast_unop($1, PLUSPLUS, POSTFIX);}
 |   expr "--" %prec POSTFIX {$$ = new_ast_unop($1, MINUSMINUS, POSTFIX);}
 |   "++" expr %prec PREFIX {$$ = new_ast_unop($2, PLUSPLUS, PREFIX);}
 |   "--" expr %prec PREFIX {$$ = new_ast_unop($2, MINUSMINUS, PREFIX);}
-|   '(' expr ')'            {$$=$2;}
 |   '+' expr %prec SIZEOF  {$$ = new_ast_unop($2, '+', PREFIX);}
 |   '-' expr %prec PREFIX {$$= new_ast_unop($2, '-', PREFIX);}
 |   '!' expr %prec SIZEOF  {$$ = new_ast_unop($2, '!', PREFIX);}
 |   '~' expr %prec SIZEOF  {$$ = new_ast_unop($2, '~', PREFIX);}
+|   '&' expr %prec SIZEOF  {$$ = new_ast_unop($2, '&', PREFIX);}
 |   SIZEOF expr {$$ = new_ast_unop($2, SIZEOF, PREFIX);}
 ;
 //A hacky way of handling lvalues. They're nodes of other types, but just specified differently 
 ast_lvalue: IDENT {$$ = new_ast_lvalue(new_ast_ident($1));}
 |    '*' expr %prec SIZEOF {$$ = new_ast_lvalue(new_ast_unop($2, '*', PREFIX));}
-|    expr INDSEL IDENT {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, new_ast_ident($3), INDSEL));}
-|    '&' expr %prec SIZEOF  {$$ = new_ast_unop($2, '&', PREFIX);}
-//Special case of array indexing
-|   expr '[' expr ']'  {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, $3, '['));}
-|   expr '.' IDENT  {$$ = new_ast_lvalue(new_ast_binop(AST_lvalue, $1, new_ast_ident($3), '.'));}
-| ast_ternop {$$ = new_ast_lvalue($1);};
+|    expr INDSEL IDENT {$$ = new_ast_lvalue(new_ast_binop(AST_special, $1, new_ast_ident($3), INDSEL));}
+|   expr '[' expr ']'  {$$ = new_ast_lvalue(new_ast_binop(AST_special, $1, $3, ']'));}
+//Special case of array creation, for empty arrays.
+|   expr '[' ']'    {$$ = new_ast_lvalue(new_ast_binop(AST_special, $1, 0, ']'));}
+|   expr '.' IDENT  {$$ = new_ast_lvalue(new_ast_binop(AST_special, $1, new_ast_ident($3), '.'));}
+| ast_ternop {$$ = new_ast_lvalue($1);}
+;
+
+/* keyword: STRUCT IDENT
+| CHAR
+| BOOL    :) slomp blup 
+| COMPLEX
+| mult_keyword COMPLEX
+| IMAGINARY
+| mult_keyword IMAGINARY
+
+| 
+
+mult_keyword: LONG
+| DOUBLE
+| FLOAT
+| mult_keyword mult_keyword
+
+;
+
+storage_class: EXTERN
+|   STRUCT
+|   STATIC
+|   VOLATILE
+|   SIGNED
+|   UNSIGNED
+|   storage_class storage_class
+|    */
 %%
 
 /* #ifdef YYDEBUG

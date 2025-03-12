@@ -12,9 +12,14 @@ enum node_type {
     AST_assign,
     AST_special,
     AST_ident,
+    AST_string,
     AST_charlit,
-    AST_num
+    AST_num,
+    //Not used particularly, though it's valid for function calls and array definition
+    AST_EMPTY,
 };
+
+
 struct ast_node typedef ast_node;
 struct binop {
     ast_node* expr_1;
@@ -57,17 +62,18 @@ typedef union ast_node_t {
     struct binop* b;
     struct ternop* t;
     struct unop* u;
-    struct lvalue* l;
     struct assign* a;
     struct special* s;
     //Non-recursive types can just live here
-    char* charlit;
-    TypedNumber* num;
+    char charlit;
+    TypedNumber num;
+    SizedString str;
     char* ident;
 } ast_node_t;
 
 
 struct ast_node { 
+    int is_lval;
     //Reference to what obj is
     int type;
     //the object itself
@@ -77,14 +83,15 @@ struct ast_node {
 
 
 
-
-
 ast_node* new_ast_ident(char* c);
 ast_node* new_ast_num(TypedNumber n);
 ast_node* new_ast_charlit(char c);
 
+ast_node* new_ast_string(SizedString s);
+
 ast_node* new_ast_binop(int type, ast_node* expr1, ast_node* expr2, int op);
 
+//Just sets a flag if desired
 ast_node* new_ast_lvalue(ast_node* expr);
 
 

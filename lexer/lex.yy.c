@@ -1518,17 +1518,17 @@ YY_RULE_SETUP
 case 88:
 YY_RULE_SETUP
 #line 148 "lex.l"
-{return(_BOOL);}
+{return(BOOL);}
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
 #line 149 "lex.l"
-{return(_COMPLEX);}
+{return(COMPLEX);}
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
 #line 150 "lex.l"
-{return(_IMAGINARY);}
+{return(IMAGINARY);}
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
@@ -2724,9 +2724,12 @@ int literal_val(char *buf, int is_str) {
 void number_val(char type) {
 	TypedNumber tn;
 
+
 	if (type == 'o' || type == 'i' || type == 'h') { /* integer */
 		tn.type = TYPE_I;
+
 		for (int idx = yyleng-1; idx >= yyleng-4 && idx >= 0; idx--) {
+
 			if (yytext[idx] == 'U' || yytext[idx] == 'u') {
 				tn.type++;
 			} else if (yytext[idx] == 'L' || yytext[idx] == 'l') {
@@ -2746,7 +2749,6 @@ void number_val(char type) {
 			fflush(stderr);
 		}
 	}	
-
 	else { /* floating */
 		tn.type = TYPE_D;
 		tn.type += (yytext[yyleng-1] == 'L' || yytext[yyleng-1] == 'l');
@@ -2762,7 +2764,6 @@ void number_val(char type) {
 			fflush(stderr);
 		}
 	}
-
 	yylval.n = tn;
 }
 

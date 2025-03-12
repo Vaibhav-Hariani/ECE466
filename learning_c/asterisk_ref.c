@@ -1,6 +1,6 @@
 #include <stdio.h>
 int main(){
-    int a = 5;
-    int b = 7;
-    a || b;
+    char* c = "%ld x is 10";
+    char c_ref = 'c';
+    printf(c, c_ref);
 }

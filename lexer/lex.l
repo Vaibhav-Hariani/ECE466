@@ -145,9 +145,9 @@ ws			[ \t\r]+
 "void"			{return(VOID);}
 "volatile"		{return(VOLATILE);}
 "while"			{return(WHILE);}
-"_Bool"			{return(_BOOL);}
-"_Complex"		{return(_COMPLEX);}
-"_Imaginary"	{return(_IMAGINARY);}
+"_Bool"			{return(BOOL);}
+"_Complex"		{return(COMPLEX);}
+"_Imaginary"	{return(IMAGINARY);}
 
 {id}			{yylval.i=strdup(yytext);	return(IDENT);}
 {char_lit}		{char_lit();				return(CHARLIT);}
@@ -276,9 +276,12 @@ int literal_val(char *buf, int is_str) {
 void number_val(char type) {
 	TypedNumber tn;
 
+
 	if (type == 'o' || type == 'i' || type == 'h') { /* integer */
 		tn.type = TYPE_I;
+
 		for (int idx = yyleng-1; idx >= yyleng-4 && idx >= 0; idx--) {
+
 			if (yytext[idx] == 'U' || yytext[idx] == 'u') {
 				tn.type++;
 			} else if (yytext[idx] == 'L' || yytext[idx] == 'l') {
@@ -298,7 +301,6 @@ void number_val(char type) {
 			fflush(stderr);
 		}
 	}	
-
 	else { /* floating */
 		tn.type = TYPE_D;
 		tn.type += (yytext[yyleng-1] == 'L' || yytext[yyleng-1] == 'l');
@@ -314,6 +316,5 @@ void number_val(char type) {
 			fflush(stderr);
 		}
 	}
-
 	yylval.n = tn;
 }

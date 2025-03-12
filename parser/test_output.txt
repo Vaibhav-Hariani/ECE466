@@ -1,7 +1,59 @@
 No File Specified 
-ASSIGNMENT '= ', 
+ASSIGNMENT ' 315 ', 
  LVAL: 
+	UNARY OP ~ PREFIX 
 		IDENT: a 
  RVAL: 
-	UNARY OP - PREFIX 
-		NUMLIT -17840: 
+	NUMLIT 2: 
+BINARY OP 313 
+	FUNCTION CALL:
+		 FUNCTION:
+			IDENT: fn 
+		 PARAMS:
+			BINARY OP , 
+				BINARY OP , 
+					BINARY OP 310 
+						BINARY OP 309 
+							IDENT: a 
+							IDENT: b 
+						IDENT: c 
+					BINARY OP ^ 
+						BINARY OP | 
+							BINARY OP & 
+								IDENT: d 
+								IDENT: e 
+							IDENT: f 
+						IDENT: g 
+				BINARY OP 312 
+					BINARY OP 311 
+						NUMLIT 10: 
+						NUMLIT 20: 
+					NUMLIT 0: 
+	ASSIGNMENT ' 315 ', 
+	 LVAL: 
+		UNARY OP ~ PREFIX 
+			IDENT: a 
+	 RVAL: 
+		NUMLIT 2: 
+ASSIGNMENT ' 308 ', 
+ LVAL: 
+	IDENT: o 
+ RVAL: 
+	CHARLIT: A: 
+ASSIGNMENT ' = ', 
+ LVAL: 
+	IDENT: p 
+ RVAL: 
+	UNARY OP & PREFIX 
+		MEMBER DEREFRENCE
+			 PARENT:
+				IDENT: x 
+			 MEMBER:
+				IDENT: m 
+UNARY OP * PREFIX 
+	UNARY OP 297 POSTFIX 
+		MEMBER ACCESS
+			 PARENT:
+				IDENT: q 
+			 MEMBER:
+				IDENT: m 

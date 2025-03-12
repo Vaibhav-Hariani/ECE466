@@ -18,34 +18,38 @@ ast_node* new_ast_ident(char* c) {
 ast_node* new_ast_num(TypedNumber n) {
   ast_node* node = new_ast_node;
   node->type = AST_num;
-  node->obj.num = &n;
+  node->obj.num = n;
   return node;
 }
 
 ast_node* new_ast_charlit(char c) {
   ast_node* node = new_ast_node;
   node->type = AST_charlit;
-  node->obj.charlit = &c;
+  node->obj.charlit = c;
+  return node;
+}
+
+ast_node* new_ast_string(SizedString s) {
+  ast_node* node = new_ast_node;
+  node->type = AST_string;
+  node->obj.str = s;
   return node;
 }
 
 ast_node* new_ast_lvalue(ast_node* expr) {
-  struct lvalue* lval = calloc(1, sizeof(struct lvalue));
-  lval->expr = expr;
-  ast_node* node = new_ast_node;
-  node->type = AST_lvalue;
-  node->obj.l = lval;
-  return node;
+  expr->is_lval=1;
+  return expr;
 }
 
 ast_node* new_ast_binop(int type, ast_node* expr1, ast_node* expr2, int op) {
   ast_node* node = new_ast_node;
+  struct binop* bin = calloc(1, sizeof(struct binop));
+
   switch (type) {
     case AST_binop:
       // if(expr1->type >= AST_charlit && expr2->type >= AST_charlit) {
       // These lines should handle num literal parsing
       // }
-      struct binop* bin = calloc(1, sizeof(struct binop));
       node->type = AST_binop;
       bin->expr_1 = expr1;
       bin->expr_2 = expr2;
@@ -63,8 +67,8 @@ ast_node* new_ast_binop(int type, ast_node* expr1, ast_node* expr2, int op) {
       node->obj.a = obj;
 
       // hackier lvalue handling
-      if (expr1->type != AST_lvalue) {
-        printf("Invalid Expression: No lvalues \n");
+      if (expr1->is_lval != 1) {
+        yyerror("Expr1 in assignment not an lvalue");
         exit(1);
       }
       break;
@@ -73,12 +77,14 @@ ast_node* new_ast_binop(int type, ast_node* expr1, ast_node* expr2, int op) {
       struct special* spec = calloc(1, sizeof(struct special));
       spec->expr_1 = expr1;
       spec->expr_2 = expr2;
-
       node->type = AST_special;
+      spec->opcode = op;
       node->obj.s = spec;
       break;
+
+
     default:
-      fprintf(stderr, "Something went wrong: Not a valid object code");
+      yyerror("Not a real binop");
       exit(1);
       break;
   }
@@ -105,6 +111,9 @@ ast_node* new_ast_unop(ast_node* expr, int op, int dir) {
   obj->opcode = op;
   obj->sequence = dir;
   node->obj.u = obj;
+  //Allowing lvalue status to "trickle up" through unops
+  //This should hopefully make my life easier going forward
+  node->is_lval=expr->is_lval;
   return node;
 }
 
@@ -113,9 +122,60 @@ ast_node* print_ast(ast_node* expr) {
   return expr;
 }
 
-//As parser becomes larger and larger, this will need to be converted to a more modular approach
-//I'm thinking of using the enums as function pointers to specific print functions.
-//However, this bloated mess works for this assignment that is currently much later than I (or you) would like
+// Helper function to print an int
+void print_num(TypedNumber num) {
+  if (num.type <= TYPE_ULLI) {
+    fprintf(stderr, "NUMLIT %lld: \n", num.val.i);
+  } else {
+    fprintf(stderr, "NUMLIT %llf: \n", num.val.f);
+  }
+};
+
+// Helper function to print the special objects
+void print_special(struct special* s, int num_tabs) {
+  num_tabs++;
+  char* str1;
+  char* str2;
+  char* str3;
+  char tab_arr[num_tabs + 1];
+  memset(tab_arr, '\t', num_tabs);
+  tab_arr[num_tabs] = '\0';
+
+  switch (s->opcode) {
+    case (']'):
+      str1 = "ARRAY INDEX:";
+      str2 = "OBJECT:";
+      str3 = "INDEX:";
+    break;    
+    case (')'):
+      str1 = "FUNCTION CALL:";
+      str2 = "FUNCTION:";
+      str3 = "PARAMS:";
+    break;
+  case ('.'):
+    str1 = "MEMBER ACCESS";
+    str2 = "PARENT:";
+    str3 = "MEMBER:";
+  break;
+  case (INDSEL):
+    str1 = "MEMBER DEREFRENCE";
+    str2 = "PARENT:";
+    str3 = "MEMBER:";
+  break;
+  }
+  fprintf(stderr, "%s\n", str1);
+  fprintf(stderr, "%s %s\n", tab_arr, str2);
+  print_recurse(s->expr_1, num_tabs + 1);
+  if(s->expr_2 != NULL) {
+    fprintf(stderr, "%s %s\n", tab_arr, str3);
+    print_recurse(s->expr_2, num_tabs + 1);  
+  }
+}
+
+// As parser becomes larger and larger, this will need to be converted to a more
+// modular approach I'm thinking of using the enums as function pointers to
+// specific print functions. However, this bloated mess works for this
+// assignment that is currently much later than I (or you) would like
 void print_recurse(ast_node* expr, int num_tabs) {
   char tab_arr[num_tabs + 1];
   char* c;
@@ -150,10 +210,10 @@ void print_recurse(ast_node* expr, int num_tabs) {
     case AST_unop:
       struct unop* u = expr->obj.u;
       char* pre_post = (u->sequence == PREFIX) ? "PREFIX" : "POSTFIX";
-        if (u->opcode < 255) {
-          fprintf(stderr, "UNARY OP %c %s \n", u->opcode, pre_post);
-        } else {
-          fprintf(stderr, "UNARY OP %d %s \n", u->opcode, pre_post);
+      if (u->opcode < 255) {
+        fprintf(stderr, "UNARY OP %c %s \n", u->opcode, pre_post);
+      } else {
+        fprintf(stderr, "UNARY OP %d %s \n", u->opcode, pre_post);
       }
       print_recurse(u->expr, num_tabs + 1);
       break;
@@ -161,7 +221,9 @@ void print_recurse(ast_node* expr, int num_tabs) {
     case AST_assign:
       struct assign* a = expr->obj.a;
       if (a->opcode < 255) {
-        fprintf(stderr, "ASSIGNMENT \'%c \', \n", a->opcode % 255);
+        fprintf(stderr, "ASSIGNMENT \' %c \', \n", a->opcode);
+      } else {
+        fprintf(stderr, "ASSIGNMENT \' %d \', \n", a->opcode);
       }
       fprintf(stderr, "%s LVAL: \n", tab_arr);
       print_recurse(a->lvalue, num_tabs + 1);
@@ -169,34 +231,31 @@ void print_recurse(ast_node* expr, int num_tabs) {
       print_recurse(a->rvalue, num_tabs + 1);
       break;
 
-    case AST_lvalue:
-      struct lvalue* l = expr->obj.l;
-      // fprintf(stderr, "LVAL: \n");
-      print_recurse(l->expr, num_tabs);
+
+    case AST_ident:
+      c = expr->obj.ident;
+      fprintf(stderr, "IDENT: %s \n", c);
+      break;
+
+    case AST_string:
+      c = expr->obj.str.li;
+      fprintf(stderr, "STRINGLIT: %s \n", c);
       break;
 
     case AST_charlit:
-      c = expr->obj.charlit;
-      fprintf(stderr, "CHARLIT %c: \n", c);
+      char lit = expr->obj.charlit;
+      fprintf(stderr, "CHARLIT: %c: \n", lit);
       break;
 
     case AST_num:
-      TypedNumber* n = expr->obj.num;
-      fprintf(stderr, "NUMLIT %d: \n", n);
-      break;
-
-    case AST_ident:
-      char* ident = expr->obj.ident;
-      fprintf(stderr, "IDENT: %s \n", ident);
+      TypedNumber n = expr->obj.num;
+      print_num(n);
       break;
 
     case AST_special:
       struct special* s = expr->obj.s;
-      fprintf(stderr, "FUNCTION CALL: \n");
-      fprintf(stderr, "Function \n");
-      print_recurse(s->expr_1, num_tabs + 1);
-      fprintf(stderr, "Parameters \n");
-      print_recurse(s->expr_2, num_tabs + 1);
+      print_special(s, num_tabs);
+      break;
 
     default:
       fprintf(stderr, "Unkown Expression Type: Failed \n");
