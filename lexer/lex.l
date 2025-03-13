@@ -1,13 +1,13 @@
 %option noyywrap
 %{
-#include "tokens-manual.h"
+#include "parser.tab.h"
 #include "yylval.h"
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <errno.h>
 
-YYSTYPE yylval;
+// YYSTYPE yylval;
 char *filename;
 int line;
 
@@ -145,20 +145,20 @@ ws			[ \t\r]+
 "void"			{return(VOID);}
 "volatile"		{return(VOLATILE);}
 "while"			{return(WHILE);}
-"_Bool"			{return(_BOOL);}
-"_Complex"		{return(_COMPLEX);}
-"_Imaginary"	{return(_IMAGINARY);}
+"_Bool"			{return(BOOL);}
+"_Complex"		{return(COMPLEX);}
+"_Imaginary"	{return(IMAGINARY);}
 
 {id}			{yylval.i=strdup(yytext);	return(IDENT);}
 {char_lit}		{char_lit();				return(CHARLIT);}
 {str_lit}		{str_lit();					return(STRING);}
-{octint}		{number_val('o');			return(NUMBER);}
-{decint}		{number_val('i');			return(NUMBER);}
-{hexint}		{number_val('h');			return(NUMBER);}
-{deci2f}		{number_val('I');			return(NUMBER);}
-{hexi2f}		{number_val('H');			return(NUMBER);}
-{decflt}		{number_val('I');			return(NUMBER);}
-{hexflt}		{number_val('H');			return(NUMBER);}
+{octint}		{number_val('o');			return(NUM);}
+{decint}		{number_val('i');			return(NUM);}
+{hexint}		{number_val('h');			return(NUM);}
+{deci2f}		{number_val('I');			return(NUM);}
+{hexi2f}		{number_val('H');			return(NUM);}
+{decflt}		{number_val('I');			return(NUM);}
+{hexflt}		{number_val('H');			return(NUM);}
 
 {preproc}		{new_filename(); line=1;}
 {newline}		{line++;}
@@ -276,9 +276,12 @@ int literal_val(char *buf, int is_str) {
 void number_val(char type) {
 	TypedNumber tn;
 
+
 	if (type == 'o' || type == 'i' || type == 'h') { /* integer */
 		tn.type = TYPE_I;
+
 		for (int idx = yyleng-1; idx >= yyleng-4 && idx >= 0; idx--) {
+
 			if (yytext[idx] == 'U' || yytext[idx] == 'u') {
 				tn.type++;
 			} else if (yytext[idx] == 'L' || yytext[idx] == 'l') {
@@ -298,7 +301,6 @@ void number_val(char type) {
 			fflush(stderr);
 		}
 	}	
-
 	else { /* floating */
 		tn.type = TYPE_D;
 		tn.type += (yytext[yyleng-1] == 'L' || yytext[yyleng-1] == 'l');
@@ -314,6 +316,5 @@ void number_val(char type) {
 			fflush(stderr);
 		}
 	}
-
 	yylval.n = tn;
 }
