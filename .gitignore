@@ -2,3 +2,4 @@
 *.tab.*
 *.out
 *.h.gch
+parser/python_generators/*

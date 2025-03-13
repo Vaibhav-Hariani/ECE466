@@ -94,7 +94,7 @@ void print_num(TypedNumber num) {
   if (num.type <= TYPE_ULLI) {
     fprintf(stderr, "NUMLIT: %lld \n", num.val.i);
   } else {
-    fprintf(stderr, "NUMLIT: %llf \n", num.val.f);
+    fprintf(stderr, "NUMLIT: %Lg \n", num.val.f);
   }
 };
 
