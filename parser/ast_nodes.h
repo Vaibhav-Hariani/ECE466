@@ -82,7 +82,6 @@ struct ast_node {
 
 
 
-
 ast_node* new_ast_ident(char* c);
 ast_node* new_ast_num(TypedNumber n);
 ast_node* new_ast_charlit(char c);
@@ -99,8 +98,5 @@ ast_node* new_ast_ternop(int type, ast_node* expr1, ast_node* expr2, ast_node* e
 
 ast_node* new_ast_unop(ast_node* expr, int op, int dir);
 
-ast_node* print_ast(ast_node* expr);
-
-void print_recurse(ast_node* expr, int num_tabs);
 
 #endif

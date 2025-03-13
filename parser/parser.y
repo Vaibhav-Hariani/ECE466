@@ -41,6 +41,7 @@ VOLATILE	WHILE	BOOL	COMPLEX	IMAGINARY
     #include "yylval.h"
     #include "ast_nodes.h"
     #include <stdio.h>
+    #include "parse_output.h"
     void yyerror(const char * s);
 }
 
