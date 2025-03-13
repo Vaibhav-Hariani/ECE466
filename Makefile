@@ -1,7 +1,7 @@
 
 CFLAGS = -Wall -Wno-abi -I ./lexer -I ./parser
 
-all: parser
+all: vaibharser
 
 flex: lexer/lex.l
 	cd lexer && flex lex.l
@@ -12,6 +12,7 @@ bison: parser/ast_nodes.c parser/ast_nodes.h parser/parser.y parser/parse_output
 bison_debug: parser/ast_nodes.c parser/ast_nodes.h parser/parser.y
 	cd parser && bison --debug -d parser.y 
 
+vaibharser: parser
 parser: flex bison
 	gcc -o parser/parser.out $(CFLAGS) parser/parser.tab.c lexer/lex.yy.c parser/ast_nodes.c parser/parse_output.c
 
