@@ -1,0 +1,121 @@
+BINARY OP , 
+	ASSIGNMENT ' = ', 
+	 LVAL: 
+		IDENT: a 
+	 RVAL: 
+		IDENT: b 
+	ASSIGNMENT ' += ', 
+	 LVAL: 
+		IDENT: c 
+	 RVAL: 
+		BINARY OP / 
+			UNARY OP - PREFIX 
+				NUMLIT: 10 
+			IDENT: d 
+TERNARY: 
+ EXPR 1: 
+	BINARY OP != 
+		STRINGLIT: X 
+		STRINGLIT: Y 
+ EXPR 2: 
+	UNARY OP -- PREFIX 
+		IDENT: e 
+ EXPR 3: 
+	UNARY OP ++ POSTFIX 
+		IDENT: f 
+ASSIGNMENT ' -= ', 
+ LVAL: 
+	IDENT: g 
+ RVAL: 
+	ARRAY INDEX:
+		 OBJECT:
+			STRINGLIT: ABC 
+		 INDEX:
+			NUMLIT: 3 
+ASSIGNMENT ' %%= ', 
+ LVAL: 
+	IDENT: h 
+ RVAL: 
+	UNARY OP + PREFIX 
+		IDENT: i 
+ASSIGNMENT ' /= ', 
+ LVAL: 
+	IDENT: i 
+ RVAL: 
+	NUMLIT: 15.3 
+ASSIGNMENT ' <<= ', 
+ LVAL: 
+	IDENT: j 
+ RVAL: 
+	NUMLIT: 3 
+BINARY OP , 
+	ASSIGNMENT ' <<= ', 
+	 LVAL: 
+		IDENT: j 
+	 RVAL: 
+		IDENT: k 
+	IDENT: l 
+ASSIGNMENT ' &= ', 
+ LVAL: 
+	IDENT: m 
+ RVAL: 
+	BINARY OP && 
+		IDENT: n 
+		IDENT: o 
+ASSIGNMENT ' |= ', 
+ LVAL: 
+	IDENT: n 
+ RVAL: 
+	BINARY OP ^ 
+		IDENT: n 
+		IDENT: o 
+BINARY OP >= 
+	FUNCTION CALL:
+		 FUNCTION:
+			IDENT: fn 
+		 PARAMS:
+			BINARY OP , 
+				BINARY OP , 
+					BINARY OP || 
+						BINARY OP && 
+							IDENT: a 
+							IDENT: b 
+						IDENT: c 
+					BINARY OP ^ 
+						BINARY OP | 
+							BINARY OP & 
+								IDENT: d 
+								IDENT: e 
+							IDENT: f 
+						IDENT: g 
+				BINARY OP != 
+					BINARY OP == 
+						NUMLIT: 10 
+						NUMLIT: 20 
+					NUMLIT: 0 
+	BINARY OP << 
+		UNARY OP ~ PREFIX 
+			IDENT: a 
+		NUMLIT: 2 
+ASSIGNMENT ' ^= ', 
+ LVAL: 
+	IDENT: o 
+ RVAL: 
+	CHARLIT: A: 
+ASSIGNMENT ' = ', 
+ LVAL: 
+	IDENT: p 
+ RVAL: 
+	UNARY OP & PREFIX 
+		MEMBER DEREFRENCE
+			 PARENT:
+				IDENT: x 
+			 MEMBER:
+				IDENT: m 
+UNARY OP * PREFIX 
+	UNARY OP ++ POSTFIX 
+		MEMBER ACCESS
+			 PARENT:
+				IDENT: q 
+			 MEMBER:
+				IDENT: m 
