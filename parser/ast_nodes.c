@@ -58,7 +58,7 @@ ast_node* new_ast_binop(int type, ast_node* expr1, ast_node* expr2, int op) {
       bin->opcode = op;
       node->obj.b = bin;
       break;
-    case AST_assign:
+    case AST_assign:;
       struct assign* obj = calloc(1, sizeof(struct assign));
       obj->lvalue = expr1;
       obj->rvalue = expr2;
@@ -74,7 +74,7 @@ ast_node* new_ast_binop(int type, ast_node* expr1, ast_node* expr2, int op) {
       }
       break;
 
-    case AST_special:
+    case AST_special:;
       struct special* spec = calloc(1, sizeof(struct special));
       spec->expr_1 = expr1;
       spec->expr_2 = expr2;

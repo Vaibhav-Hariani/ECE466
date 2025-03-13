@@ -10,9 +10,12 @@
 // Returns an array of pointers, that allows us to quickly find & fix tokens
 char** token_labels() {
   char** tokens = calloc(STRING + 1, sizeof(tokens));
+  /*
+  // Unused, commented out
   tokens[YYEOF] ="YYEOF";
   tokens[YYerror] ="YYerror";
   tokens[YYUNDEF] ="YYUNDEF";
+  */
   tokens[TOKEOF] ="TOKEOF";
   tokens[ELLIPSIS] ="...";
   tokens[POUNDPOUND] ="##";
@@ -153,7 +156,7 @@ void print_recurse(ast_node* expr, int num_tabs, char** tokens) {
 
   int opcode;
   switch (expr->type) {
-    case AST_binop:
+    case AST_binop:;
       struct binop* b = expr->obj.b;
       opcode = b->opcode;
 
@@ -167,7 +170,7 @@ void print_recurse(ast_node* expr, int num_tabs, char** tokens) {
       /* code */
       break;
 
-    case AST_ternop:
+    case AST_ternop:;
       struct ternop* t = expr->obj.t;
       fprintf(stderr, "TERNARY: \n");
       fprintf(stderr, "%s EXPR 1: \n", tab_arr);
@@ -178,7 +181,7 @@ void print_recurse(ast_node* expr, int num_tabs, char** tokens) {
       print_recurse(t->expr_3, num_tabs + 1, tokens);
       break;
 
-    case AST_unop:
+    case AST_unop:;
       struct unop* u = expr->obj.u;
       char* pre_post = (u->sequence == PREFIX) ? "PREFIX" : "POSTFIX";
       opcode = u->opcode;
@@ -190,7 +193,7 @@ void print_recurse(ast_node* expr, int num_tabs, char** tokens) {
       print_recurse(u->expr, num_tabs + 1, tokens);
       break;
 
-    case AST_assign:
+    case AST_assign:;
       struct assign* a = expr->obj.a;
       opcode = a->opcode;
       if (opcode < 255) {
@@ -214,17 +217,17 @@ void print_recurse(ast_node* expr, int num_tabs, char** tokens) {
       fprintf(stderr, "STRINGLIT: %s \n", c);
       break;
 
-    case AST_charlit:
+    case AST_charlit:;
       char lit = expr->obj.charlit;
       fprintf(stderr, "CHARLIT: %c: \n", lit);
       break;
 
-    case AST_num:
+    case AST_num:;
       TypedNumber n = expr->obj.num;
       print_num(n);
       break;
 
-    case AST_special:
+    case AST_special:;
       struct special* s = expr->obj.s;
       print_special(s, num_tabs, tokens);
       break;
