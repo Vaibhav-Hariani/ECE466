@@ -85,13 +85,16 @@ ast_binop: expr '+' expr   { $$=new_ast_binop(AST_binop, $1, $3, '+');}
 |	 expr '&' expr 	 { $$=new_ast_binop(AST_binop, $1, $3, '&');}
 |	 expr '|' expr 	 { $$=new_ast_binop(AST_binop, $1, $3, '|');}
 |    expr '^' expr   { $$=new_ast_binop(AST_binop, $1, $3, '^');}
-|   expr ',' expr    { $$=new_ast_binop(AST_binop, $1, $3, ',');}
+|   expr SHL expr 	 { $$=new_ast_binop(AST_binop, $1, $3, SHL);}
+|	expr SHR expr 	 { $$=new_ast_binop(AST_binop, $1, $3, SHR);}
 |	expr EQEQ expr 	     { $$=new_ast_binop(AST_binop, $1, $3, EQEQ);}
 |	expr NOTEQ expr 	 { $$=new_ast_binop(AST_binop, $1, $3, NOTEQ);}
 |	expr LOGAND expr 	 { $$=new_ast_binop(AST_binop, $1, $3, LOGAND);}
 |	expr LOGOR expr 	 { $$=new_ast_binop(AST_binop, $1, $3, LOGOR);}
 |   expr LTEQ expr 	 { $$=new_ast_binop(AST_binop, $1, $3, LTEQ);}
 |	expr GTEQ expr 	 { $$=new_ast_binop(AST_binop, $1, $3, GTEQ);}
+
+|   expr ',' expr    { $$=new_ast_binop(AST_binop, $1, $3, ',');}
 //Special object type for objects with (potentially) 2 arguments, but aren't actually binops
 |   expr '(' expr ')' { $$=new_ast_binop(AST_special, $1, $3, ')');};
 |   expr '(' ')'    { $$=new_ast_binop(AST_special, $1, 0, ')');};
@@ -100,8 +103,6 @@ ast_binop: expr '+' expr   { $$=new_ast_binop(AST_binop, $1, $3, '+');}
 
 //separated here so theat lvalues can be handled properly later on in the system
 ast_assign: expr '=' expr   { $$=new_ast_binop(AST_assign, $1, $3, '=');}
-|   expr SHL expr 	 { $$=new_ast_binop(AST_assign, $1, $3, SHL);}
-|	expr SHR expr 	 { $$=new_ast_binop(AST_assign, $1, $3, SHR);}
 |	expr TIMESEQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, TIMESEQ);}
 |	expr DIVEQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, DIVEQ);}
 |	expr MODEQ expr 	 { $$=new_ast_binop(AST_assign, $1, $3, MODEQ);}

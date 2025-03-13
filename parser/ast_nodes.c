@@ -1,4 +1,5 @@
 #include "ast_nodes.h"
+
 #include <stdlib.h>
 
 #include "parser.tab.h"
@@ -34,9 +35,12 @@ ast_node* new_ast_string(SizedString s) {
 }
 
 ast_node* new_ast_lvalue(ast_node* expr) {
-  expr->is_lval=1;
+  expr->is_lval = 1;
   return expr;
 }
+
+
+// Given that both both children of a binop are numbers or char literals, this should convert them into a new numlit/charlit.
 
 ast_node* new_ast_binop(int type, ast_node* expr1, ast_node* expr2, int op) {
   ast_node* node = new_ast_node;
@@ -47,11 +51,11 @@ ast_node* new_ast_binop(int type, ast_node* expr1, ast_node* expr2, int op) {
       // if(expr1->type >= AST_charlit && expr2->type >= AST_charlit) {
       // These lines should handle num literal parsing
       // }
+      
       node->type = AST_binop;
       bin->expr_1 = expr1;
       bin->expr_2 = expr2;
       bin->opcode = op;
-
       node->obj.b = bin;
       break;
     case AST_assign:
@@ -78,7 +82,6 @@ ast_node* new_ast_binop(int type, ast_node* expr1, ast_node* expr2, int op) {
       spec->opcode = op;
       node->obj.s = spec;
       break;
-
 
     default:
       yyerror("Not a real binop");
@@ -108,9 +111,8 @@ ast_node* new_ast_unop(ast_node* expr, int op, int dir) {
   obj->opcode = op;
   obj->sequence = dir;
   node->obj.u = obj;
-  //Allowing lvalue status to "trickle up" through unops
-  //This should hopefully make my life easier going forward
-  node->is_lval=expr->is_lval;
+  // Allowing lvalue status to "trickle up" through unops
+  // This should hopefully make my life easier going forward
+  node->is_lval = expr->is_lval;
   return node;
 }
-

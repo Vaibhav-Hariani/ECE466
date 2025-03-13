@@ -1,0 +1,11 @@
+No File Specified 
+ASSIGNMENT ' +=  ', 
+ LVAL: 
+	IDENT: a 
+ RVAL: 
+	IDENT: b 
+ASSIGNMENT ' >>  ', 
+ LVAL: 
+	IDENT: b 
+ RVAL: 
+	NUMLIT: 2 
